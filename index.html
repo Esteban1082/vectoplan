@@ -3281,9 +3281,26 @@
     const col = '#bf5af2';
     if (m.pick){
       const q = pickPoint(mouseImg, m.pick.pts[0]);
-      if (m.pick.mode === 'v') lineThrough(q, [q[0], q[1]+100], col, [4,4]);
-      else if (m.pick.mode === 'h') lineThrough(q, [q[0]+100, q[1]], col, [4,4]);
-      else if (m.pick.pts.length) lineThrough(m.pick.pts[0], q, col, [4,4]);
+      let pa = null, pb = null;
+      if (m.pick.mode === 'v'){ pa = q; pb = [q[0], q[1]+100]; }
+      else if (m.pick.mode === 'h'){ pa = q; pb = [q[0]+100, q[1]]; }
+      else if (m.pick.pts.length){ pa = m.pick.pts[0]; pb = q; }
+      if (pa && Math.hypot(pb[0]-pa[0], pb[1]-pa[1]) > 1e-6){
+        lineThrough(pa, pb, col, [4,4]);
+        // aperçu du miroir de la sélection actuelle
+        const polys = [];
+        for (const id of state.selection){ const e = state.entities.find(x => x.id === id); if (e && e.points && e.type !== 'text') polys.push(e.points); }
+        for (const sg of state.sugSel) polys.push(sg.points);
+        if (polys.length){
+          ctx.strokeStyle = 'rgba(191,90,242,.95)'; ctx.lineWidth = 2; ctx.setLineDash([]); ctx.lineJoin = 'round';
+          ctx.beginPath();
+          for (const pl of polys){
+            const sp = pl.map(q2 => imgToScreen(...reflectPt(q2, pa, pb)));
+            ctx.moveTo(sp[0][0], sp[0][1]); for (let i=1;i<sp.length;i++) ctx.lineTo(sp[i][0], sp[i][1]);
+          }
+          ctx.stroke();
+        }
+      }
     }
     if (m.axis){
       lineThrough(m.axis[0], m.axis[1], col, [14,4,3,4]);
