@@ -245,6 +245,12 @@
     flex-wrap: wrap; justify-content: center; width: max-content; max-width: calc(100% - 20px); padding: 8px 14px; border-radius: 14px; background: rgba(30,30,34,.88); border: 1px solid var(--border); font-size: 12.5px;
     -webkit-backdrop-filter: blur(18px); backdrop-filter: blur(18px); box-shadow: 0 10px 30px rgba(0,0,0,.45); }
   #curveFloat.show { display: flex; }
+  #eraserFloat { position: absolute; top: 12px; left: 50%; transform: translateX(-50%); display: none; align-items: center; gap: 12px; z-index: 5;
+    flex-wrap: wrap; justify-content: center; width: max-content; max-width: calc(100% - 20px); padding: 8px 14px; border-radius: 14px; background: rgba(30,30,34,.88);
+    border: 1px solid var(--border); font-size: 12.5px; -webkit-backdrop-filter: blur(18px); backdrop-filter: blur(18px); box-shadow: 0 10px 30px rgba(0,0,0,.45); }
+  #eraserFloat.show { display: flex; }
+  #eraserFloat .presets { margin: 0; }
+  #eraserFloat .presets button { padding: 6px 12px; }
   #curveFloat label { display: flex; align-items: center; gap: 8px; color: var(--text-dim); }
   #curveFloat input[type=range] { width: 130px; }
   #curveFloat #cfVal { min-width: 18px; text-align: right; color: var(--text); font-variant-numeric: tabular-nums; }
@@ -315,6 +321,14 @@
 
     <div id="canvasWrap">
       <canvas id="canvas"></canvas>
+      <div id="eraserFloat">
+        <b>🧹 Gomme efface</b>
+        <div class="presets" id="eraseTargets">
+          <button data-et="all" class="active" title="Traits bleus de la détection ET lignes définitives">Tout</button>
+          <button data-et="detect" title="Seulement les traits bleus de la détection">Détection</button>
+          <button data-et="final" title="Seulement les lignes définitives (validées ou tracées)">Définitives</button>
+        </div>
+      </div>
       <div id="curveFloat">
         <b>〰 Courbe</b>
         <label>Courbure <input type="range" id="cfBulge" min="1" max="40" value="9"><span id="cfVal">9</span></label>
@@ -2251,7 +2265,7 @@
       if ((tc <= 0.002 && touchStart) || (tc >= 0.998 && touchEnd)) return [1, 0];
       return [lo, hi];
     };
-    if (state.suggestions && state.suggestions.length){
+    if (state.suggestions && state.suggestions.length && state.eraseTarget !== 'final'){
       const next = [];
       for (const s of state.suggestions){
         if (distToSegment(pt, s.points[0], s.points[1]) >= radius){ next.push(s); continue; }
@@ -2274,7 +2288,7 @@
     }
     const kept = [];
     for (const e of state.entities){
-      if (!state.layerVisible[e.layer]){ kept.push(e); continue; }
+      if (!state.layerVisible[e.layer] || state.eraseTarget === 'detect'){ kept.push(e); continue; }
       if (e.type === 'text'){
         if (Math.hypot(e.pos[0]-pt[0], e.pos[1]-pt[1]) < radius){ removedAny = true; state.selection = state.selection.filter(id => id !== e.id); }
         else kept.push(e);
@@ -2307,7 +2321,7 @@
     state.entities.forEach(e => { if (e.type !== 'text' && state.layerVisible[e.layer]) for (let i=0;i<e.points.length-1;i++) others.push({ref:e, i, a:e.points[i], b:e.points[i+1]}); });
     (state.suggestions||[]).forEach(s => others.push({ref:s, i:0, a:s.points[0], b:s.points[1], sug:true}));
     let best = null, bestD = thresh;
-    for (const o of others){ const d = distToSegment(pt, o.a, o.b); if (d < bestD){ bestD = d; best = o; } }
+    for (const o of others){ if (o.sug ? state.eraseTarget === 'final' : state.eraseTarget === 'detect') continue; const d = distToSegment(pt, o.a, o.b); if (d < bestD){ bestD = d; best = o; } }
     if (!best) return false;
     const {a,b} = best, dx=b[0]-a[0], dy=b[1]-a[1], L2=dx*dx+dy*dy;
     if (L2 < 1e-9) return false;
@@ -3327,6 +3341,17 @@
     }
     ctx.restore();
   }
+
+
+  // ===== Gomme : choisir ce qu'elle efface =====
+  state.eraseTarget = 'all';
+  const erF = document.getElementById('eraserFloat');
+  document.querySelectorAll('#eraseTargets button').forEach(b => b.addEventListener('click', () => {
+    state.eraseTarget = b.dataset.et;
+    document.querySelectorAll('#eraseTargets button').forEach(x => x.classList.toggle('active', x === b));
+    render();
+  }));
+  setInterval(() => erF.classList.toggle('show', state.tool === 'eraser'), 150);
 
   // ===== Réglage de la courbe en direct (aperçu + courbe sélectionnée) =====
   const cf = document.getElementById('curveFloat'), cfB = document.getElementById('cfBulge'), cfV = document.getElementById('cfVal');
