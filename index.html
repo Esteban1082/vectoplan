@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Plan Vectoriseur</title>
+<title>Vectoplan — du scan au DXF</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <style>
   :root {
@@ -214,6 +214,57 @@
   #modalBox input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(10,132,255,.25); }
   #modalBox .row { display: flex; gap: 8px; justify-content: flex-end; }
 
+
+  #dropHint { background: radial-gradient(700px 420px at 50% 40%, rgba(10,132,255,.10), transparent 70%); }
+  #dropHint .wcard { pointer-events: auto; max-width: 520px; padding: 28px 30px; text-align: center; color: var(--text);
+    background: rgba(30,30,34,.82); border: 1px solid var(--border); border-radius: 22px;
+    -webkit-backdrop-filter: saturate(180%) blur(24px); backdrop-filter: saturate(180%) blur(24px);
+    box-shadow: 0 24px 70px rgba(0,0,0,.5); }
+  .wlogo { font-size: 34px; font-weight: 700; letter-spacing: -.03em; }
+  .wlogo span { color: var(--accent); }
+  .wtag { color: var(--text-dim); font-size: 14px; margin: 6px 0 18px; line-height: 1.5; }
+  .wbig { background: var(--accent); color: #fff; font-size: 16px; font-weight: 650; padding: 13px 26px; border-radius: 14px;
+    cursor: pointer; display: inline-block; box-shadow: 0 6px 22px rgba(10,132,255,.5); transition: transform .1s, filter .15s; }
+  .wbig:hover { filter: brightness(1.1); transform: translateY(-1px); }
+  .wor { font-size: 12px; color: var(--text-dim); margin: 10px 0 18px; }
+  .wsteps { display: flex; gap: 10px; margin-bottom: 18px; }
+  .wsteps > div { flex: 1; background: var(--panel2); border-radius: 12px; padding: 10px 8px; font-size: 12px; line-height: 1.35; }
+  .wsteps b { display: flex; width: 22px; height: 22px; margin: 0 auto 6px; border-radius: 50%; background: rgba(10,132,255,.25); color: var(--accent); align-items: center; justify-content: center; font-size: 12px; }
+  .wbtns { display: flex; gap: 8px; justify-content: center; margin-bottom: 14px; }
+  .wpriv { font-size: 11.5px; color: var(--accent2); }
+
+  /* presets + advanced */
+  .presets { display: flex; gap: 4px; background: var(--panel2); padding: 3px; border-radius: 11px; margin-bottom: 10px; }
+  .presets button { flex: 1; background: transparent; padding: 7px 4px; font-size: 11.5px; border-radius: 8px; }
+  .presets button.active { background: var(--accent); }
+  .adv-toggle { width: 100%; justify-content: space-between; margin-bottom: 6px; background: transparent; color: var(--text-dim); font-size: 11.5px; padding: 6px 4px; }
+  #advBox { display: none; }
+  #advBox.open { display: block; }
+
+  /* guided tour */
+  #tourVeil { position: fixed; inset: 0; z-index: 60; display: none; }
+  #tourVeil.show { display: block; }
+  #tourHole { position: fixed; border-radius: 12px; box-shadow: 0 0 0 9999px rgba(0,0,0,.62); border: 2px solid var(--accent); transition: all .25s; pointer-events: none; }
+  #tourBox { position: fixed; width: 300px; padding: 16px 18px; border-radius: 16px; background: rgba(44,44,48,.97); border: 1px solid var(--border);
+    box-shadow: 0 20px 60px rgba(0,0,0,.6); transition: all .25s; }
+  #tourBox h5 { margin: 0 0 6px; font-size: 14px; }
+  #tourBox p { margin: 0 0 14px; font-size: 12.5px; line-height: 1.5; color: var(--text-dim); }
+  #tourBox .tr { display: flex; gap: 8px; align-items: center; }
+  #tourBox .tn { font-size: 11px; color: var(--text-dim); flex: 1; }
+
+  /* about */
+  #aboutBox { width: 460px; max-width: 92vw; max-height: 86vh; overflow-y: auto; user-select: text; }
+  #aboutBox h4 { margin-top: 0; }
+  #aboutBox h6 { margin: 14px 0 4px; font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: var(--text-dim); }
+  #aboutBox p, #aboutBox li { font-size: 12.5px; line-height: 1.55; margin: 0 0 6px; }
+  #aboutBox ul { padding-left: 18px; margin: 0; }
+  #aboutBox a { color: var(--accent); }
+  #toast { position: fixed; bottom: 46px; left: 50%; transform: translateX(-50%) translateY(20px); opacity: 0; z-index: 70; pointer-events: none;
+    background: rgba(50,50,56,.96); border: 1px solid var(--border); border-radius: 12px; padding: 11px 16px; font-size: 13px; max-width: 520px; text-align: center;
+    box-shadow: 0 12px 40px rgba(0,0,0,.5); transition: all .25s; }
+  #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  #toast.err { border-color: rgba(255,69,58,.6); }
+
   ::-webkit-scrollbar { width: 8px; height: 8px; }
   ::-webkit-scrollbar-thumb { background: rgba(255,255,255,.16); border-radius: 10px; }
   ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,.28); }
@@ -223,7 +274,7 @@
 <div id="app">
 
   <header>
-    <h1>Plan <span>Vectoriseur</span></h1>
+    <h1>Vecto<span>plan</span></h1>
     <label class="file-btn">📂 Charger un scan<input type="file" id="imgInput" accept="image/*,.pdf,application/pdf"></label>
     <button id="btnCalib">📏 Calibrer l'échelle</button>
     <button id="btnRecenter" title="Home">🎯 Recentrer</button>
@@ -235,6 +286,8 @@
     <button id="btnSaveProj">💾 Sauver projet</button>
     <button id="btnExportDxf">⬇ Exporter DXF</button>
     <div class="spacer"></div>
+    <button id="btnTour" title="Visite guidée">❓ Aide</button>
+    <button id="btnAbout" title="À propos, licences, droits des plans">ℹ️</button>
     <button id="btnNew" class="danger">🗑 Nouveau</button>
   </header>
 
@@ -253,15 +306,36 @@
 
     <div id="canvasWrap">
       <canvas id="canvas"></canvas>
-      <div id="dropHint"><div class="big">🗺</div>Charge un scan de plan pour commencer<br>(ou glisse-dépose l'image ici)</div>
+      <div id="dropHint">
+        <div class="wcard">
+          <div class="wlogo">Vecto<span>plan</span></div>
+          <div class="wtag">Transforme un plan scanné ou un PDF en dessin vectoriel,<br>prêt à ouvrir dans AutoCAD.</div>
+          <label class="wbig">📂 Choisir un plan<input type="file" id="imgInput2" accept="image/*,.pdf,application/pdf"></label>
+          <div class="wor">ou glisse-dépose ton fichier ici (PDF, JPG, PNG)</div>
+          <div class="wsteps">
+            <div><b>1</b><span>Charge ton plan</span></div>
+            <div><b>2</b><span>Lance la détection automatique</span></div>
+            <div><b>3</b><span>Corrige, puis exporte en DXF</span></div>
+          </div>
+          <div class="wbtns"><button id="btnTour2">▶ Visite guidée (30 s)</button><button id="btnAbout2">ℹ️ À propos</button></div>
+          <div class="wpriv">🔒 Tout se passe sur ton ordinateur : ton plan n'est jamais envoyé sur internet.</div>
+        </div>
+      </div>
     </div>
 
     <div id="sidebar">
       <div class="side-section">
         <h3>Détection automatique</h3>
         <div style="font-size:11.5px;color:var(--text-dim);line-height:1.5;margin-bottom:10px;">
-          Repère les traits droits nets du scan et les propose comme segments à valider. Pas d'IA — moins fiable sur un scan flou, abîmé ou très ornementé : vérifie et nettoie toujours le résultat après.
+          Repère les traits droits du plan et les propose en bleu. Choisis le type de plan ci-dessous, lance la détection, puis garde ou efface les traits. Vérifie toujours le résultat : un scan très abîmé demande quelques retouches.
         </div>
+        <div class="presets" id="presets">
+          <button data-preset="net" class="active" title="Plan propre, traits nets (réglages de base)">Plan net</button>
+          <button data-preset="abime" title="Scan taché, flou ou bruité : moins de petits traits parasites">Scan abîmé</button>
+          <button data-preset="hachures" title="Murs hachurés, briques, ombrages : ignore les hachures">Hachures</button>
+        </div>
+        <button class="adv-toggle" id="btnAdv"><span>⚙️ Réglages avancés</span><span id="advArrow">⌄</span></button>
+        <div id="advBox">
         <div class="toggle-row"><span>Sensibilité</span><input type="range" id="rngDetSens" min="1" max="10" value="10"></div>
         <div class="toggle-row"><span>Longueur mini</span><input type="range" id="rngDetLen" min="1" max="10" value="1"></div>
         <div class="toggle-row"><span>Fusion lignes proches</span><input type="range" id="rngDetFuse" min="1" max="10" value="1"></div>
@@ -269,6 +343,7 @@
         <div class="toggle-row"><span>Ignorer les hachures</span><label class="switch"><input type="checkbox" id="chkHatch"><span class="slider-sw"></span></label></div>
         <input type="checkbox" id="chkDeepDetect" checked hidden>
         <div style="font-size:11px;color:var(--text-dim);line-height:1.4;margin:2px 0 8px 0;">✓ Détection poussée toujours active : 3 passes de sensibilité, seuls les traits retrouvés sur plusieurs passes sont gardés.</div>
+        </div>
         <button id="btnPickZone" style="width:100%;justify-content:center;">📐 Choisir une zone</button>
         <div id="zoneStatus" style="font-size:11px;color:var(--text-dim);margin-top:6px;display:none;">
           <span id="zoneStatusText">Zone active</span>
@@ -408,6 +483,30 @@
   </div>
 
 </div>
+
+
+<div id="tourVeil"><div id="tourHole"></div><div id="tourBox"><h5 id="tourT"></h5><p id="tourP"></p>
+  <div class="tr"><span class="tn" id="tourN"></span><button id="tourSkip">Passer</button><button id="tourNext" class="active">Suivant</button></div></div></div>
+
+<div id="aboutBg" class="" style="position:fixed;inset:0;background:rgba(0,0,0,.45);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);display:none;align-items:center;justify-content:center;z-index:55;">
+  <div id="modalBox" class="aboutwrap" style="width:auto;"><div id="aboutBox">
+    <h4>Vectoplan <span style="color:var(--text-dim);font-weight:400;">(nom provisoire)</span></h4>
+    <p>Outil gratuit pour transformer un plan scanné ou un PDF en dessin vectoriel (DXF) que tu ouvres dans AutoCAD.</p>
+    <h6>Confidentialité</h6>
+    <p>Tout le traitement se fait dans ton navigateur. Ton plan n'est ni envoyé, ni stocké sur un serveur : il ne quitte jamais ton ordinateur.</p>
+    <h6>Droits des plans</h6>
+    <p>Tu es responsable des plans que tu charges : assure-toi d'avoir le droit de les reproduire et de les redessiner (propriétaire, architecte, archives publiques…). Vectoplan est un outil de dessin, il ne donne aucun droit sur les documents.</p>
+    <h6>Précision</h6>
+    <p>La détection est automatique et peut se tromper sur un scan flou ou abîmé. Vérifie toujours le résultat avant de t'en servir pour un chantier, un permis ou un document officiel.</p>
+    <h6>Licences et crédits</h6>
+    <ul>
+      <li><b>PDF.js</b> (Mozilla) — licence Apache 2.0, lecture des PDF.</li>
+      <li><b>OpenCV.js</b> (OpenCV) — licence Apache 2.0, détection des lignes.</li>
+    </ul>
+    <div class="row" style="margin-top:16px;"><button id="aboutClose" class="active">Fermer</button></div>
+  </div></div>
+</div>
+<div id="toast"></div>
 
 <div id="modalBg">
   <div id="modalBox">
@@ -576,7 +675,7 @@
     const reader = new FileReader();
     reader.onload = e => {
       const img = new Image();
-      img.onerror = () => alert("Ce fichier n'a pas pu être lu comme image.");
+      img.onerror = () => window.vpToast("Ce fichier n'a pas pu être lu comme image. Formats acceptés : JPG, PNG, PDF.", true);
       img.onload = () => applyLoadedImage(img, e.target.result);
       img.src = e.target.result;
     };
@@ -642,7 +741,7 @@
     if (isPdfFile(file)){
       loadPdfFile(file).catch(err => {
         console.error(err);
-        alert('Impossible de lire ce PDF : ' + err.message);
+        window.vpToast(window.vpFriendly(err), true);
       });
     } else {
       loadImageFile(file);
@@ -1148,7 +1247,7 @@
   }
 
   async function runDetection(){
-    if (!state.img){ alert('Charge un scan avant de lancer la détection.'); return; }
+    if (!state.img){ window.vpToast('Charge d\'abord un plan (bouton « Choisir un plan »).', true); return; }
     const btn = document.getElementById('btnDetect');
     const statusEl = document.getElementById('detStatus');
     btn.disabled = true;
@@ -1229,7 +1328,7 @@
       updateClusterNav();
     } catch(err){
       console.error(err);
-      statusEl.textContent = 'Erreur : ' + errMsg(err);
+      statusEl.textContent = window.vpFriendly(err);
     } finally {
       btn.disabled = false;
       render();
@@ -1313,7 +1412,7 @@
     document.getElementById('detActions').style.display = final.length ? 'flex' : 'none';
     updateClusterNav(); render();
   }
-  document.getElementById('btnVectorPdf').addEventListener('click', () => extractPdfVectors().catch(err => { document.getElementById('detStatus').textContent = 'Erreur : ' + errMsg(err); }));
+  document.getElementById('btnVectorPdf').addEventListener('click', () => extractPdfVectors().catch(err => { document.getElementById('detStatus').textContent = window.vpFriendly(err); }));
 
   document.getElementById('btnDetAccept').addEventListener('click', () => {
     for (const sug of state.suggestions){
@@ -2663,7 +2762,7 @@
   function dxfEscape(s){ return String(s).replace(/\n/g,' '); }
 
   document.getElementById('btnExportDxf').addEventListener('click', () => {
-    if (!state.entities.length){ alert('Aucun tracé à exporter.'); return; }
+    if (!state.entities.length){ window.vpToast('Rien à exporter pour l\'instant : valide les traits bleus (« Valider ») ou trace des lignes.', true); return; }
     if (!state.mPerPx){
       if (!confirm("L'échelle n'est pas calibrée : l'export utilisera directement les pixels comme unités. Continuer quand même ?")) return;
     }
@@ -2790,6 +2889,100 @@
   document.getElementById('tagSnapPt').addEventListener('click', () => document.getElementById('chkSnapPoint').click());
   document.getElementById('tagSnapAng').addEventListener('click', () => document.getElementById('chkSnapAngle').click());
   hintFor();
+
+
+  // ===== Vectoplan : accueil, préréglages, visite guidée, à propos, messages =====
+  function toast(msg, isErr){
+    const t = document.getElementById('toast');
+    t.textContent = msg; t.classList.toggle('err', !!isErr); t.classList.add('show');
+    clearTimeout(toast._t); toast._t = setTimeout(() => t.classList.remove('show'), isErr ? 7000 : 3500);
+  }
+  window.vpToast = toast;
+  function friendly(err){
+    const m = errMsg(err), l = String(m).toLowerCase();
+    if (l.includes('password') || l.includes('mot de passe')) return "Ce PDF est protégé par un mot de passe. Enlève la protection puis recharge-le.";
+    if (l.includes('invalid pdf') || l.includes('missing pdf') || l.includes('pdf structure')) return "Ce fichier n'est pas un PDF valide ou il est abîmé. Essaie de le ré-exporter ou d'en faire une capture.";
+    if (l.includes('pdf.js') || l.includes('connexion') || l.includes('moteur de détection') || l.includes('failed to fetch') || l.includes('networkerror') || l.includes('script')) return "Un composant n'a pas pu être téléchargé. Vérifie ta connexion internet puis réessaie (la première fois, il faut internet).";
+    if (l.includes('memory') || l.includes('mémoire') || l.includes('allocation')) return "Le plan est trop gros pour être analysé d'un coup. Essaie « Choisir une zone » pour n'analyser qu'une partie.";
+    return "Un problème est survenu (" + m + "). Réessaie, et si ça continue, recharge la page.";
+  }
+  window.vpFriendly = friendly;
+
+  // presets
+  const PRESETS = {
+    net:      { sens:10, len:1, fuse:1, hatch:false, ext:false },
+    abime:    { sens:7,  len:4, fuse:4, hatch:false, ext:false },
+    hachures: { sens:10, len:2, fuse:2, hatch:true,  ext:false }
+  };
+  function applyPreset(name){
+    const P = PRESETS[name]; if (!P) return;
+    const setR = (id, v) => { const r = document.getElementById(id); r.value = v; r.dispatchEvent(new Event('input', { bubbles:true })); };
+    setR('rngDetSens', P.sens); setR('rngDetLen', P.len); setR('rngDetFuse', P.fuse);
+    document.getElementById('chkHatch').checked = P.hatch;
+    document.getElementById('chkExtend').checked = P.ext;
+    document.querySelectorAll('#presets button').forEach(b => b.classList.toggle('active', b.dataset.preset === name));
+  }
+  document.querySelectorAll('#presets button').forEach(b => b.addEventListener('click', () => applyPreset(b.dataset.preset)));
+  // touching a slider by hand = custom settings
+  ['rngDetSens','rngDetLen','rngDetFuse','chkHatch','chkExtend'].forEach(id => {
+    document.getElementById(id).addEventListener('change', () => document.querySelectorAll('#presets button').forEach(b => b.classList.remove('active')));
+  });
+  document.getElementById('btnAdv').addEventListener('click', () => {
+    const o = document.getElementById('advBox').classList.toggle('open');
+    document.getElementById('advArrow').textContent = o ? '⌃' : '⌄';
+  });
+
+  // second file input on the welcome card
+  document.getElementById('imgInput2').addEventListener('change', e => {
+    if (e.target.files[0]) loadAnyFile(e.target.files[0]);
+    e.target.value = '';
+  });
+
+  // about
+  const aboutBg = document.getElementById('aboutBg');
+  const openAbout = () => { aboutBg.style.display = 'flex'; };
+  document.getElementById('btnAbout').addEventListener('click', openAbout);
+  document.getElementById('btnAbout2').addEventListener('click', openAbout);
+  document.getElementById('aboutClose').addEventListener('click', () => { aboutBg.style.display = 'none'; });
+  aboutBg.addEventListener('mousedown', e => { if (e.target === aboutBg) aboutBg.style.display = 'none'; });
+
+  // guided tour
+  const TOUR = [
+    { sel: 'header .file-btn', t: '1 · Charge ton plan', p: "Clique ici (ou glisse ton fichier sur la page) : PDF, JPG ou PNG. Pour un PDF de plusieurs pages, on te demande laquelle ouvrir." },
+    { sel: '#sidebar .side-section', t: '2 · Détection automatique', p: "Choisis le type de plan (net, abîmé, avec hachures), puis « Lancer la détection ». Les traits trouvés apparaissent en bleu." },
+    { sel: '#btnDetect', t: 'Lancer la détection', p: "C'est le gros bouton qui fait le travail. Tu peux d'abord « Choisir une zone » pour n'analyser qu'une partie du plan." },
+    { sel: '#toolbar', t: '3 · Corriger', p: "Sélectionner, tracer une ligne, une courbe, relier deux points, effacer à la gomme… Les touches S, L, C, J, E sont des raccourcis." },
+    { sel: '#btnCalib', t: 'Mettre à l\'échelle', p: "Clique deux points dont tu connais la distance réelle : l'export DXF sortira en mètres, à la bonne taille." },
+    { sel: '#btnExportDxf', t: '4 · Exporter', p: "Télécharge le DXF, ouvre-le dans AutoCAD puis enregistre-le en DWG. Pense à sauver ton projet pour le reprendre plus tard." }
+  ];
+  let tourI = -1;
+  const veil = document.getElementById('tourVeil'), hole = document.getElementById('tourHole'), tbox = document.getElementById('tourBox');
+  function tourShow(i){
+    if (i >= TOUR.length){ return tourEnd(); }
+    tourI = i; const st = TOUR[i];
+    const el = document.querySelector(st.sel); if (!el) return tourShow(i + 1);
+    const r = el.getBoundingClientRect(), pad = 5;
+    hole.style.left = (r.left - pad) + 'px'; hole.style.top = (r.top - pad) + 'px';
+    hole.style.width = (r.width + pad*2) + 'px'; hole.style.height = (r.height + pad*2) + 'px';
+    document.getElementById('tourT').textContent = st.t;
+    document.getElementById('tourP').textContent = st.p;
+    document.getElementById('tourN').textContent = (i + 1) + ' / ' + TOUR.length;
+    document.getElementById('tourNext').textContent = i === TOUR.length - 1 ? 'Terminer' : 'Suivant';
+    const bw = 300, bh = tbox.offsetHeight || 170;
+    let x = r.right + 18, y = r.top;
+    if (x + bw > innerWidth - 10) x = Math.max(10, r.left - bw - 18);
+    if (x < 10 || x + bw > innerWidth - 10){ x = Math.max(10, Math.min(innerWidth - bw - 10, r.left)); y = r.bottom + 16; }
+    y = Math.max(10, Math.min(innerHeight - bh - 10, y));
+    tbox.style.left = x + 'px'; tbox.style.top = y + 'px';
+  }
+  function tourStart(){ veil.classList.add('show'); tourShow(0); }
+  function tourEnd(){ veil.classList.remove('show'); tourI = -1; try { localStorage.setItem('vp_tour_done', '1'); } catch(_) {} }
+  document.getElementById('tourNext').addEventListener('click', () => tourShow(tourI + 1));
+  document.getElementById('tourSkip').addEventListener('click', tourEnd);
+  document.getElementById('btnTour').addEventListener('click', tourStart);
+  document.getElementById('btnTour2').addEventListener('click', tourStart);
+  window.addEventListener('resize', () => { if (tourI >= 0) tourShow(tourI); });
+  window.addEventListener('keydown', e => { if (tourI >= 0 && e.key === 'Escape') tourEnd(); }, true);
 
   snapshot();
   resizeCanvas();
