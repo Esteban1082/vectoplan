@@ -394,6 +394,22 @@
       </div>
 
 
+      <div class="side-section" id="mirrorSection">
+        <h3>Miroir (symétrie)</h3>
+        <div style="font-size:11.5px;color:var(--text-dim);line-height:1.5;margin-bottom:8px;">
+          Dessine une moitié, l'autre se fait toute seule. 1) Place l'axe, 2) active « Miroir en direct » : tout ce que tu traces ou modifies est reflété de l'autre côté.
+        </div>
+        <div style="display:flex;gap:6px;margin-bottom:6px;">
+          <button id="btnAxisV" style="flex:1;justify-content:center;" title="Axe vertical : clique l'endroit de l'axe">↔ Vertical</button>
+          <button id="btnAxisH" style="flex:1;justify-content:center;" title="Axe horizontal : clique l'endroit de l'axe">↕ Horizontal</button>
+          <button id="btnAxisF" style="flex:1;justify-content:center;" title="Axe libre : clique 2 points">∕ Libre</button>
+        </div>
+        <div id="mirStatus" style="font-size:11.5px;color:var(--text-dim);margin-bottom:8px;">Axe : aucun</div>
+        <div class="toggle-row"><span>Miroir en direct</span><label class="switch"><input type="checkbox" id="chkMirrorLive" disabled><span class="slider-sw"></span></label></div>
+        <button id="btnMirrorSel" style="width:100%;justify-content:center;margin-top:6px;" title="Copie la sélection de l'autre côté de l'axe (copie indépendante)">⧉ Dupliquer la sélection en miroir</button>
+        <button id="btnAxisClear" class="danger" style="width:100%;justify-content:center;margin-top:6px;display:none;">✕ Retirer l'axe</button>
+      </div>
+
       <div class="side-section">
         <h3>Calques</h3>
         <div id="layerList"></div>
@@ -2826,6 +2842,7 @@
       if (hover){ const [hx,hy] = imgToScreen(hover[0], hover[1]); ctx.strokeStyle = '#00e5ff'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(hx,hy,9,0,7); ctx.stroke(); }
     }
 
+    drawMirrorUI();
     drawGuides();
 
     if (state.marquee){
@@ -3111,6 +3128,188 @@
   document.getElementById('aboutClose').addEventListener('click', () => { aboutBg.style.display = 'none'; });
   aboutBg.addEventListener('mousedown', e => { if (e.target === aboutBg) aboutBg.style.display = 'none'; });
 
+
+
+  // ===== Miroir : axe de symétrie, jumeaux liés, duplication =====
+  state.mirror = { axis: null, live: false, pick: null };
+  let mirSeen = state.nextId - 1;
+  const mirSig = new Map();
+  function reflectPt(p, a, b){
+    const dx = b[0]-a[0], dy = b[1]-a[1], L = Math.hypot(dx,dy) || 1, ux = dx/L, uy = dy/L;
+    const t = (p[0]-a[0])*ux + (p[1]-a[1])*uy;
+    const fx = a[0]+ux*t, fy = a[1]+uy*t;
+    return [2*fx-p[0], 2*fy-p[1]];
+  }
+  function entSig(e){
+    const f = q => q[0].toFixed(2)+','+q[1].toFixed(2);
+    return (e.points ? e.points.map(f).join(';') : '') + '#' + (e.ctrl ? e.ctrl.map(f).join(';') : '') + '#' + (e.pos ? f(e.pos) : '') + '#' + (e.bulge||0) + '#' + (e.tension||0);
+  }
+  function writeReflected(dst, src, ax){
+    const [a,b] = ax;
+    if (src.type === 'text'){ dst.pos = reflectPt(src.pos, a, b); return; }
+    if (src.ctrl){
+      dst.ctrl = src.ctrl.map(q => reflectPt(q, a, b));
+      dst.bulge = -(src.bulge || 0); dst.tension = src.tension;
+      regenCurve(dst);
+    } else {
+      dst.points = src.points.map(q => reflectPt(q, a, b));
+    }
+  }
+  function cloneEntity(e){ return JSON.parse(JSON.stringify(e)); }
+  function createTwin(src, ax){
+    const t = cloneEntity(src);
+    t.id = state.nextId++; t.mir = src.id; t.mirAxis = [ax[0].slice(), ax[1].slice()];
+    src.mir = t.id; src.mirAxis = t.mirAxis;
+    writeReflected(t, src, ax);
+    state.entities.push(t);
+    mirSig.set(src.id, entSig(src)); mirSig.set(t.id, entSig(t));
+    return t;
+  }
+  function syncMirrors(){
+    const byId = new Map(); let any = false;
+    for (const e of state.entities){ byId.set(e.id, e); if (e.mir) any = true; }
+    if (!any) return;
+    for (const e of state.entities){
+      if (!e.mir || !e.mirAxis) continue;
+      const o = byId.get(e.mir);
+      if (!o || o.mir !== e.id){ delete e.mir; delete e.mirAxis; continue; }
+      if (e.id > o.id) continue; // handle each pair once
+      const sa = entSig(e), sb = entSig(o), pa = mirSig.get(e.id), pb = mirSig.get(o.id);
+      if (pa === undefined || pb === undefined){ mirSig.set(e.id, sa); mirSig.set(o.id, sb); continue; }
+      const ca = sa !== pa, cb = sb !== pb;
+      if (ca && !cb){ writeReflected(o, e, e.mirAxis); }
+      else if (cb && !ca){ writeReflected(e, o, e.mirAxis); }
+      mirSig.set(e.id, entSig(e)); mirSig.set(o.id, entSig(o));
+    }
+  }
+  const _renderOrig = render;
+  render = function(){ syncMirrors(); _renderOrig(); };
+
+  function mirrorNew(){
+    const top = state.nextId - 1;
+    if (!state.mirror.live || !state.mirror.axis){ mirSeen = top; return; }
+    const fresh = state.entities.filter(e => e.id > mirSeen && !e.mir);
+    if (!fresh.length){ mirSeen = top; return; }
+    for (const e of fresh) createTwin(e, state.mirror.axis);
+    mirSeen = state.nextId - 1;
+    if (historyIdx >= 0) history[historyIdx] = serializeState(); else snapshot();
+    state.dirty = true; updateStatus(); updateSidebar(); render();
+  }
+  const afterCanvas = () => setTimeout(mirrorNew, 0);
+  canvas.addEventListener('mouseup', afterCanvas, true);
+  canvas.addEventListener('dblclick', afterCanvas, true);
+  canvas.addEventListener('contextmenu', afterCanvas, true);
+  window.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key.toLowerCase() === 'c') afterCanvas(); });
+
+  function updateMirrorUI(){
+    const ax = state.mirror.axis, m = state.mirror;
+    const st = document.getElementById('mirStatus');
+    if (m.pick) st.textContent = m.pick.mode === 'free' ? (m.pick.pts.length ? 'Clique le 2e point de l\'axe…' : 'Clique le 1er point de l\'axe…') : 'Clique l\'endroit de l\'axe sur le plan…';
+    else if (!ax) st.textContent = 'Axe : aucun';
+    else {
+      const dx = Math.abs(ax[1][0]-ax[0][0]), dy = Math.abs(ax[1][1]-ax[0][1]);
+      st.textContent = 'Axe : ' + (dx < 1e-6 ? 'vertical' : dy < 1e-6 ? 'horizontal' : 'incliné') + (m.live ? ' · miroir en direct actif' : '');
+    }
+    const chk = document.getElementById('chkMirrorLive');
+    chk.disabled = !ax; chk.checked = !!(ax && m.live);
+    document.getElementById('btnAxisClear').style.display = ax ? 'flex' : 'none';
+    document.getElementById('mirrorSection').classList.remove('collapsed');
+  }
+  function startPick(mode){
+    state.mirror.pick = { mode, pts: [] };
+    toast(mode === 'free' ? "Clique 2 points pour placer l'axe (Échap pour annuler)." : "Clique sur le plan à l'endroit de l'axe (Échap pour annuler).");
+    updateMirrorUI(); render();
+  }
+  document.getElementById('btnAxisV').addEventListener('click', () => startPick('v'));
+  document.getElementById('btnAxisH').addEventListener('click', () => startPick('h'));
+  document.getElementById('btnAxisF').addEventListener('click', () => startPick('free'));
+  document.getElementById('btnAxisClear').addEventListener('click', () => { state.mirror.axis = null; state.mirror.live = false; updateMirrorUI(); render(); });
+  document.getElementById('chkMirrorLive').addEventListener('change', e => {
+    state.mirror.live = e.target.checked && !!state.mirror.axis;
+    mirSeen = state.nextId - 1;
+    if (state.mirror.live) toast('Miroir en direct actif : ce que tu traces est reflété de l\'autre côté.');
+    updateMirrorUI(); render();
+  });
+  function pickPoint(raw, from){
+    let q = snapPointOnly(raw);
+    if (from && state.snapAngle && q === raw){ const dx = q[0]-from[0], dy = q[1]-from[1], d = Math.hypot(dx,dy), st = Math.PI/12; if (d > 1e-6){ const a = Math.round(Math.atan2(dy,dx)/st)*st; q = [from[0]+Math.cos(a)*d, from[1]+Math.sin(a)*d]; } }
+    return q;
+  }
+  let mirSwallowUp = false;
+  canvas.addEventListener('mousedown', e => {
+    const pk = state.mirror.pick; if (!pk || e.button !== 0) return;
+    e.stopImmediatePropagation(); e.preventDefault(); mirSwallowUp = true;
+    const r = canvas.getBoundingClientRect(), raw = screenToImg(e.clientX - r.left, e.clientY - r.top);
+    const q = pickPoint(raw, pk.pts[0]);
+    if (pk.mode === 'v') state.mirror.axis = [[q[0], q[1]], [q[0], q[1]+100]];
+    else if (pk.mode === 'h') state.mirror.axis = [[q[0], q[1]], [q[0]+100, q[1]]];
+    else { pk.pts.push(q); if (pk.pts.length < 2){ updateMirrorUI(); render(); return; } if (Math.hypot(pk.pts[1][0]-pk.pts[0][0], pk.pts[1][1]-pk.pts[0][1]) < 2){ pk.pts.pop(); return; } state.mirror.axis = [pk.pts[0], pk.pts[1]]; }
+    state.mirror.pick = null; updateMirrorUI(); render();
+    toast('Axe placé. Active « Miroir en direct » pour dessiner une seule moitié.');
+  }, true);
+  canvas.addEventListener('mouseup', e => { if (mirSwallowUp){ mirSwallowUp = false; e.stopImmediatePropagation(); } }, true);
+  window.addEventListener('keydown', e => { if (e.key === 'Escape' && state.mirror.pick){ state.mirror.pick = null; updateMirrorUI(); render(); } }, true);
+
+  document.getElementById('btnMirrorSel').addEventListener('click', () => {
+    const ax = state.mirror.axis;
+    if (!ax){ toast("Place d'abord un axe (Vertical, Horizontal ou Libre).", true); return; }
+    const made = [];
+    for (const id of state.selection){
+      const e = state.entities.find(x => x.id === id); if (!e || e.mir) continue;
+      const c = cloneEntity(e); delete c.mir; delete c.mirAxis; c.id = state.nextId++;
+      writeReflected(c, e, ax); state.entities.push(c); made.push(c.id);
+    }
+    const sMade = [];
+    for (const sg of state.sugSel){
+      const c = { points: sg.points.map(q => reflectPt(q, ax[0], ax[1])), loose: sg.loose, cluster: -1 };
+      state.suggestions.push(c); sMade.push(c);
+    }
+    if (!made.length && !sMade.length){ toast("Sélectionne d'abord ce que tu veux refléter (lignes, courbes ou traits bleus).", true); return; }
+    state.selection = made; state.sugSel = sMade; mirSeen = state.nextId - 1;
+    snapshot(); updateSidebar(); if (typeof refreshDetStatus === 'function') refreshDetStatus(); render();
+    toast((made.length + sMade.length) + ' élément(s) dupliqué(s) en miroir.');
+  });
+
+  function drawMirrorUI(){
+    const m = state.mirror; if (!m) return; ctx.save();
+    const lineThrough = (a, b, col, dash) => {
+      const A = imgToScreen(a[0], a[1]), B = imgToScreen(b[0], b[1]);
+      const dx = B[0]-A[0], dy = B[1]-A[1], L = Math.hypot(dx,dy) || 1;
+      ctx.strokeStyle = col; ctx.lineWidth = 1.6; ctx.setLineDash(dash);
+      ctx.beginPath(); ctx.moveTo(A[0]-dx/L*6000, A[1]-dy/L*6000); ctx.lineTo(A[0]+dx/L*6000, A[1]+dy/L*6000); ctx.stroke();
+    };
+    const col = '#bf5af2';
+    if (m.pick){
+      const q = pickPoint(mouseImg, m.pick.pts[0]);
+      if (m.pick.mode === 'v') lineThrough(q, [q[0], q[1]+100], col, [4,4]);
+      else if (m.pick.mode === 'h') lineThrough(q, [q[0]+100, q[1]], col, [4,4]);
+      else if (m.pick.pts.length) lineThrough(m.pick.pts[0], q, col, [4,4]);
+    }
+    if (m.axis){
+      lineThrough(m.axis[0], m.axis[1], col, [14,4,3,4]);
+      const c = imgToScreen(m.axis[0][0], m.axis[0][1]);
+      ctx.setLineDash([]); ctx.font = '600 11px -apple-system, "Segoe UI", sans-serif';
+      const txt = '⟷ Axe de symétrie'; const w = ctx.measureText(txt).width + 14;
+      const lx = Math.max(10, Math.min(canvas.clientWidth - w - 10, c[0] + 10)), ly = Math.max(26, Math.min(canvas.clientHeight - 30, c[1] - 14));
+      ctx.fillStyle = 'rgba(191,90,242,.92)'; ctx.beginPath(); ctx.roundRect ? ctx.roundRect(lx, ly-16, w, 22, 7) : ctx.rect(lx, ly-16, w, 22); ctx.fill();
+      ctx.fillStyle = '#fff'; ctx.fillText(txt, lx+7, ly-1);
+      // ghost of the shape being drawn
+      if (m.live && state.draft && mouseImg){
+        let pts = state.draft.points.map(q => [q[0], q[1]]);
+        const sg = state.guides;
+        if (state.tool === 'wall') pts.push(applySnap(state.draft.points[state.draft.points.length-1], mouseImg, null));
+        else if (state.tool === 'curve') pts.push(snapPointOnly(mouseImg));
+        state.guides = sg;
+        if (state.tool === 'curve') pts = catmullRomSpline(pts, 10);
+        const sp = pts.map(q => imgToScreen(...reflectPt(q, m.axis[0], m.axis[1])));
+        if (sp.length > 1){
+          ctx.strokeStyle = col; ctx.lineWidth = 2; ctx.setLineDash([6,4]);
+          ctx.beginPath(); ctx.moveTo(sp[0][0], sp[0][1]); for (let i=1;i<sp.length;i++) ctx.lineTo(sp[i][0], sp[i][1]); ctx.stroke();
+        }
+      }
+    }
+    ctx.restore();
+  }
 
   // ===== Réglage de la courbe en direct (aperçu + courbe sélectionnée) =====
   const cf = document.getElementById('curveFloat'), cfB = document.getElementById('cfBulge'), cfV = document.getElementById('cfVal');
