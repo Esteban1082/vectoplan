@@ -751,7 +751,7 @@
   <h4>Le scan en fond</h4>
   <p>Le panneau « Scan » règle l'opacité du scan et permet de le masquer pour mieux voir ton dessin.</p>
   <h4>Exporter</h4>
-  <p>« Exporter DXF » télécharge un fichier prêt pour AutoCAD (ouvre-le puis « Enregistrer sous » en DWG). Si rien n'est à exporter, valide d'abord les traits bleus ou trace des lignes.</p>
+  <p>« Exporter DXF » télécharge un fichier prêt pour AutoCAD (ouvre-le puis « Enregistrer sous » en DWG). Les courbes à 2 points sortent en vrais <b>arcs</b>, les lignes brisées et les autres courbes en <b>polylignes</b> : un seul objet à modifier dans AutoCAD, pas des dizaines de petits segments. Si rien n'est à exporter, valide d'abord les traits bleus ou trace des lignes.</p>
   <div class="tip">Sans calibration, le DXF est en pixels : pense à calibrer avant d'exporter si tu veux des mesures réelles.</div>
 </section>
 
@@ -3232,7 +3232,7 @@
   document.getElementById('btnExportDxf').addEventListener('click', () => {
     if (!state.entities.length){ window.vpToast('Rien à exporter pour l\'instant : valide les traits bleus (« Valider ») ou trace des lignes.', true); return; }
     if (!state.mPerPx){
-      if (!confirm("L'échelle n'est pas calibrée : l'export utilisera directement les pixels comme unités. Continuer quand même ?")) return;
+      if (!confirm("L'échelle n'est pas calibrée : le DXF sera exporté en pixels, sans mesures réelles.\n\nOK = exporter quand même en pixels\nAnnuler = calibrer l'échelle maintenant")){ document.getElementById('btnCalib').click(); return; }
     }
     const mpp = state.mPerPx || 1;
     const imgH = state.img ? state.img.height : 0;
@@ -3264,19 +3264,48 @@
         const h = 0.15;
         lines.push('0','TEXT','8',L.name,'10',x.toFixed(4),'20',y.toFixed(4),'30','0.0','40',h.toFixed(3),'1',dxfEscape(e.text));
       } else {
-        for (let i=0;i<e.points.length-1;i++){
-          const [x1,y1] = toReal(e.points[i]);
-          const [x2,y2] = toReal(e.points[i+1]);
-          track(x1,y1); track(x2,y2);
-          lines.push('0','LINE','8',L.name,
-            '10',x1.toFixed(4),'20',y1.toFixed(4),'30','0.0',
-            '11',x2.toFixed(4),'21',y2.toFixed(4),'31','0.0');
+        const f4 = v => v.toFixed(4);
+        const real = e.points.map(toReal);
+        real.forEach(q => track(q[0], q[1]));
+        let done = false;
+        // courbe à 2 points = arc de cercle exact -> vrai ARC AutoCAD
+        if (e.ctrl && e.ctrl.length === 2 && real.length >= 3){
+          const A = real[0], B = real[real.length-1], M = real[Math.floor(real.length/2)];
+          const d = 2*(A[0]*(M[1]-B[1]) + M[0]*(B[1]-A[1]) + B[0]*(A[1]-M[1]));
+          if (Math.abs(d) > 1e-9){
+            const a2 = A[0]*A[0]+A[1]*A[1], m2 = M[0]*M[0]+M[1]*M[1], b2 = B[0]*B[0]+B[1]*B[1];
+            const cx = (a2*(M[1]-B[1]) + m2*(B[1]-A[1]) + b2*(A[1]-M[1]))/d;
+            const cy = (a2*(B[0]-M[0]) + m2*(A[0]-B[0]) + b2*(M[0]-A[0]))/d;
+            const r = Math.hypot(A[0]-cx, A[1]-cy);
+            const cross = (M[0]-A[0])*(B[1]-M[1]) - (M[1]-A[1])*(B[0]-M[0]);
+            const deg = q => ((Math.atan2(q[1]-cy, q[0]-cx)*180/Math.PI) % 360 + 360) % 360;
+            const [s0, s1] = cross > 0 ? [A, B] : [B, A];
+            lines.push('0','ARC','8',L.name,'10',f4(cx),'20',f4(cy),'30','0.0','40',f4(r),'50',f4(deg(s0)),'51',f4(deg(s1)));
+            done = true;
+          }
+        }
+        // ligne brisée / courbe lissée = une seule polyligne (plus facile à modifier que des segments séparés)
+        if (!done && real.length > 2){
+          const first = real[0], last = real[real.length-1];
+          const closed = Math.hypot(first[0]-last[0], first[1]-last[1]) < 1e-6;
+          const pts = closed ? real.slice(0, -1) : real;
+          lines.push('0','POLYLINE','8',L.name,'66','1','10','0.0','20','0.0','30','0.0','70', closed ? '1' : '0');
+          for (const q of pts) lines.push('0','VERTEX','8',L.name,'10',f4(q[0]),'20',f4(q[1]),'30','0.0');
+          lines.push('0','SEQEND','8',L.name);
+          done = true;
+        }
+        if (!done){
+          for (let i=0;i<real.length-1;i++){
+            lines.push('0','LINE','8',L.name,
+              '10',f4(real[i][0]),'20',f4(real[i][1]),'30','0.0',
+              '11',f4(real[i+1][0]),'21',f4(real[i+1][1]),'31','0.0');
+          }
         }
       }
     }
     lines.push('0','ENDSEC','0','EOF');
 
-    const dxf = lines.join('\n');
+    const dxf = lines.join('\n'); window.__lastDxf = dxf;
     const blob = new Blob([dxf], {type:'application/dxf'});
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
