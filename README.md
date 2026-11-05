@@ -7,3 +7,5 @@ Tout le traitement se fait dans le navigateur : aucun fichier n'est envoyé sur 
 Les retours sont les bienvenus (ce qui marche, ce qui bloque, les fonctions souhaitées) : ouvre une [issue](https://github.com/Esteban1082/vectoplan/issues/new).
 
 Essayer : https://esteban1082.github.io/vectoplan/
+
+Soutenir le projet (don libre, optionnel) : https://ko-fi.com/estebanrdz
