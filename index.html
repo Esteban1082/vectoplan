@@ -269,6 +269,13 @@
   .btn-export { background: rgba(48,209,88,.18); color: #5be585; font-weight: 600; border: 1px solid rgba(48,209,88,.35); }
   .btn-export:hover { background: rgba(48,209,88,.28); }
 
+
+  .val.editable, #eraserSizeVal.editable, #cfVal.editable { cursor: text; border-radius: 6px; padding: 1px 4px; transition: background .15s; }
+  .val.editable:hover, #eraserSizeVal.editable:hover, #cfVal.editable:hover { background: rgba(255,255,255,.12); color: #fff; }
+  input.valedit { width: 56px; background: rgba(255,255,255,.14); border: 1px solid var(--accent); color: #fff; border-radius: 6px; padding: 1px 4px; font: inherit; font-size: 12.5px; font-weight: 600; text-align: right; outline: none; user-select: text; box-shadow: 0 0 0 3px rgba(10,132,255,.25); -moz-appearance: textfield; }
+  input.valedit::-webkit-outer-spin-button, input.valedit::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+  .dimmed { opacity: .4; }
+
   /* guide */
   #guideBg { position: fixed; inset: 0; background: rgba(0,0,0,.5); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); display: none; align-items: center; justify-content: center; z-index: 56; padding: 16px; }
   #guideBg.show { display: flex; }
@@ -496,7 +503,7 @@
           <input type="range" id="rngCurveBulge" min="1" max="40" value="9">
         </div>
         <div class="toggle-row">
-          <span>Souplesse courbe</span>
+          <span title="S'applique aux courbes de 3 points et plus (une courbe à 2 points est un arc de cercle parfait)">Souplesse (3 pts et +)</span>
           <input type="range" id="rngCurveTension" min="10" max="120" value="50">
         </div>
         <div class="toggle-row">
@@ -3635,6 +3642,48 @@
     }
   }, true);
 
+
+
+  // ===== Valeur cliquable : saisir un chiffre précis pour chaque réglage =====
+  function makeValueEditable(range, el){
+    if (!range || !el) return;
+    el.classList.add('editable'); el.title = 'Clique pour saisir une valeur précise';
+    el.addEventListener('click', e => {
+      e.stopPropagation();
+      if (el.querySelector('input')) return;
+      const suffix = /%\s*$/.test(el.textContent) ? '%' : '';
+      const inp = document.createElement('input');
+      inp.type = 'number'; inp.className = 'valedit'; inp.min = range.min; inp.max = range.max; inp.step = range.step || 1; inp.value = range.value;
+      const old = el.textContent; el.textContent = ''; el.appendChild(inp); inp.focus(); inp.select();
+      let done = false;
+      const finish = apply => {
+        if (done) return; done = true;
+        let v = parseFloat(inp.value);
+        el.textContent = old;
+        if (apply && isFinite(v)){
+          v = Math.max(parseFloat(range.min), Math.min(parseFloat(range.max), v));
+          range.value = v;
+          range.dispatchEvent(new Event('input', { bubbles: true }));
+          range.dispatchEvent(new Event('change', { bubbles: true }));
+        }
+      };
+      inp.addEventListener('keydown', ev => { ev.stopPropagation(); if (ev.key === 'Enter'){ ev.preventDefault(); finish(true); } else if (ev.key === 'Escape'){ ev.preventDefault(); finish(false); } });
+      inp.addEventListener('blur', () => finish(true));
+      inp.addEventListener('mousedown', ev => ev.stopPropagation());
+    });
+  }
+  document.querySelectorAll('input[type=range]').forEach(r => {
+    const n = r.nextElementSibling;
+    if (n && (n.tagName === 'B' || n.id === 'cfVal')) makeValueEditable(r, n);
+  });
+
+  // souplesse : grisée tant qu'elle ne concerne aucune courbe de 3 points et plus
+  const tensRow = document.getElementById('rngCurveTension').closest('.toggle-row');
+  setInterval(() => {
+    const draftMany = state.tool === 'curve' && state.draft && state.draft.points && state.draft.points.length >= 2;
+    const selMany = selectedCurves().some(c => c.ctrl && c.ctrl.length > 2);
+    tensRow.classList.toggle('dimmed', !(draftMany || selMany));
+  }, 200);
 
   // ===== Guide complet =====
   const guideBg = document.getElementById('guideBg'), guideBody = document.getElementById('guideBody'), guideNav = document.getElementById('guideNav'), guideSearch = document.getElementById('guideSearch');
