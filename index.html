@@ -1793,10 +1793,11 @@
     const pts = points;
     const result = [[pts[0][0], pts[0][1]]];
     for (let i=0; i<pts.length-1; i++){
-      const p0 = pts[i-1] || pts[i];
       const p1 = pts[i];
       const p2 = pts[i+1];
-      const p3 = pts[i+2] || p2;
+      // extrémités : point fantôme prolongeant la courbe (pas de cassure au début ni à la fin)
+      const p0 = pts[i-1] || [2*p1[0]-p2[0], 2*p1[1]-p2[1]];
+      const p3 = pts[i+2] || [2*p2[0]-p1[0], 2*p2[1]-p1[1]];
       for (let t=1; t<=samplesPerSeg; t++){
         const s = t/samplesPerSeg, s2 = s*s, s3 = s2*s;
         const h00 = 2*s3-3*s2+1, h10 = s3-2*s2+s, h01 = -2*s3+3*s2, h11 = s3-s2;
@@ -1817,9 +1818,22 @@
       const len = Math.hypot(dx,dy);
       if (len < 1e-6) return [[p1[0],p1[1]],[p2[0],p2[1]]];
       const nx = -dy/len, ny = dx/len;
-      const bulge = len * state.curveBulge / 100;
-      const mid = [ (p1[0]+p2[0])/2 + nx*bulge, (p1[1]+p2[1])/2 + ny*bulge ];
-      return catmullRomSplineCore([p1, mid, p2], samplesPerSeg);
+      const sag = len * state.curveBulge / 100;           // flèche (distance corde → sommet), signée
+      const M = [ (p1[0]+p2[0])/2, (p1[1]+p2[1])/2 ];
+      if (Math.abs(sag) < 1e-6) return [[p1[0],p1[1]],[p2[0],p2[1]]];
+      // vrai arc de cercle passant par p1, le sommet et p2 : courbure constante, aucune cassure aux bouts
+      const sg = sag < 0 ? -1 : 1, as = Math.abs(sag);
+      const R = (len*len/4 + as*as) / (2*as);
+      const C = [ M[0] + nx*sag - nx*sg*R, M[1] + ny*sag - ny*sg*R ];
+      const a1 = Math.atan2(p1[1]-C[1], p1[0]-C[0]), a2 = Math.atan2(p2[1]-C[1], p2[0]-C[0]);
+      const a0 = Math.atan2(M[1]+ny*sag-C[1], M[0]+nx*sag-C[0]);
+      const n2 = a => ((a % (2*Math.PI)) + 2*Math.PI) % (2*Math.PI);
+      const d1 = n2(a0-a1), d2 = n2(a2-a1);
+      const sweep = d1 <= d2 ? d2 : d2 - 2*Math.PI;
+      const steps = Math.max(24, Math.round(samplesPerSeg*4)), out = [];
+      for (let k = 0; k <= steps; k++){ const a = a1 + sweep*k/steps; out.push([C[0]+R*Math.cos(a), C[1]+R*Math.sin(a)]); }
+      out[0] = [p1[0],p1[1]]; out[steps] = [p2[0],p2[1]];
+      return out;
     }
     return catmullRomSplineCore(points, samplesPerSeg);
   }
