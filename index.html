@@ -276,6 +276,11 @@
   input.valedit::-webkit-outer-spin-button, input.valedit::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
   .dimmed { opacity: .4; }
 
+
+  header h1 .beta { font-style: normal; font-size: 10.5px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: #ffb340; background: rgba(255,159,10,.14); border: 1px solid rgba(255,159,10,.4); border-radius: 999px; padding: 2px 8px; margin-left: 8px; vertical-align: middle; }
+  .wbeta { margin-top: 14px; padding: 12px 14px; border-radius: 14px; background: rgba(255,159,10,.10); border: 1px solid rgba(255,159,10,.32); font-size: 12px; line-height: 1.5; color: #f1d9b0; text-align: left; }
+  .wbeta b { color: #ffcb7a; }
+
   /* guide */
   #guideBg { position: fixed; inset: 0; background: rgba(0,0,0,.5); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); display: none; align-items: center; justify-content: center; z-index: 56; padding: 16px; }
   #guideBg.show { display: flex; }
@@ -338,7 +343,7 @@
 <div id="app">
 
   <header>
-    <h1>Vecto<span>plan</span></h1>
+    <h1>Vecto<span>plan</span> <em class="beta" id="betaBadge" title="Version en développement : ton avis compte">v0.5 bêta</em></h1>
     <label class="file-btn btn-primary" title="Charger un plan (PDF, JPG ou PNG)">📂 Charger un plan<input type="file" id="imgInput" accept="image/*,.pdf,application/pdf"></label>
     <div class="grp">
       <button id="btnCalib" title="Calibrer l'échelle : clique 2 points dont tu connais la distance">📏</button>
@@ -355,6 +360,8 @@
     <div class="spacer"></div>
     <button id="btnExportDxf" class="btn-export" title="Exporter en DXF pour AutoCAD">⬇ Exporter DXF</button>
     <div class="grp">
+      <button id="btnFeedback" title="Donner mon avis, proposer une fonction">💬</button>
+      <button id="btnDonate" title="Soutenir le projet (don libre)" style="display:none">☕</button>
       <button id="btnGuide" title="Guide complet : toutes les fonctions expliquées">📖</button>
       <button id="btnAbout" title="À propos, licences, droits des plans">ℹ️</button>
       <button id="btnNew" class="danger" title="Nouveau projet (efface le travail en cours)">🗑</button>
@@ -403,6 +410,8 @@
           </div>
           <div class="wbtns"><button id="btnTour2">▶ Visite guidée (30 s)</button><button id="btnGuide3">📖 Guide complet</button><button id="btnAbout2">ℹ️ À propos</button></div>
           <div class="wpriv">🔒 Tout se passe sur ton ordinateur : ton plan n'est jamais envoyé sur internet.</div>
+          <div class="wbeta"><b>🚧 Version 0.5 bêta, toujours en développement.</b> Ça fonctionne déjà, mais la détection demande encore des retouches sur les scans abîmés. Dis-moi ce qui manque ou ce qui te gêne !
+            <div class="wbtns" style="margin:10px 0 0"><button id="btnFeedback2" class="active">💬 Donner mon avis</button><button id="btnDonate2" style="display:none">☕ Soutenir le projet</button></div></div>
         </div>
       </div>
     </div>
@@ -580,6 +589,9 @@
   <div id="modalBox" class="aboutwrap" style="width:auto;"><div id="aboutBox">
     <h4>Vectoplan <span style="color:var(--text-dim);font-weight:400;">(nom provisoire)</span></h4>
     <p>Outil gratuit pour transformer un plan scanné ou un PDF en dessin vectoriel (DXF) que tu ouvres dans AutoCAD.</p>
+    <h6>Version 0.5 bêta</h6>
+    <p>Vectoplan est en développement. Il fonctionne déjà, mais le résultat demande encore un travail de correction, surtout sur les scans abîmés. Ton avis compte : ce qui manque, ce qui te gêne, les fonctions que tu voudrais. Tout est ouvert.</p>
+    <p><a href="#" id="aboutFeedback">💬 Donner mon avis</a> <span id="aboutDonateWrap" style="display:none"> · <a href="#" id="aboutDonate">☕ Soutenir le projet</a></span></p>
     <h6>Confidentialité</h6>
     <p>Tout le traitement se fait dans ton navigateur. Ton plan n'est ni envoyé, ni stocké sur un serveur : il ne quitte jamais ton ordinateur.</p>
     <h6>Droits des plans</h6>
@@ -775,6 +787,15 @@
     <tr><td><kbd>Ctrl</kbd>+<kbd>Z</kbd> · <kbd>Ctrl</kbd>+<kbd>Y</kbd></td><td>Annuler · Refaire</td></tr>
     <tr><td><kbd>Espace</kbd> + glisser · molette · <kbd>Home</kbd></td><td>Déplacer · Zoom · Recentrer</td></tr>
   </table>
+</section>
+
+<section data-t="Version bêta et avis">
+  <h3>Version bêta et avis<small>Vectoplan 0.5 : en développement, ouvert à tes idées.</small></h3>
+  <p>L'outil fonctionne déjà, mais la détection automatique n'est pas parfaite : sur un scan abîmé, compte encore sur un travail de correction derrière. Chaque retour aide à l'améliorer.</p>
+  <h4>Donner ton avis</h4>
+  <p>Clique sur 💬 en haut. Dis ce qui marche, ce qui bloque, et quelles fonctions tu voudrais. Si tu peux, précise le type de plan (propre, scan abîmé, hachuré) et le préréglage utilisé. <b>N'envoie jamais un plan confidentiel</b> : décris le problème ou joins une capture sans données sensibles.</p>
+  <h4>Soutenir le projet</h4>
+  <p>Vectoplan est gratuit. Si l'outil te fait gagner du temps, un don libre (bouton ☕, quand il est disponible) aide à financer le développement.</p>
 </section>
 
 <section data-t="Problèmes fréquents">
@@ -3721,6 +3742,21 @@
     const selMany = selectedCurves().some(c => c.ctrl && c.ctrl.length > 2);
     tensRow.classList.toggle('dimmed', !(draftMany || selMany));
   }, 200);
+
+
+  // ===== Version bêta : avis et dons =====
+  const BETA = {
+    feedbackUrl: 'https://github.com/Esteban1082/vectoplan/issues/new',
+    donateUrl: ''   // à renseigner : lien Ko-fi, PayPal.me, Liberapay…
+  };
+  const openExt = url => { try { window.open(url, '_blank', 'noopener'); } catch(_) { location.href = url; } };
+  ['btnFeedback', 'btnFeedback2'].forEach(id => document.getElementById(id).addEventListener('click', () => openExt(BETA.feedbackUrl)));
+  document.getElementById('aboutFeedback').addEventListener('click', e => { e.preventDefault(); openExt(BETA.feedbackUrl); });
+  if (BETA.donateUrl){
+    ['btnDonate', 'btnDonate2'].forEach(id => { const b = document.getElementById(id); b.style.display = ''; b.addEventListener('click', () => openExt(BETA.donateUrl)); });
+    document.getElementById('aboutDonateWrap').style.display = '';
+    document.getElementById('aboutDonate').addEventListener('click', e => { e.preventDefault(); openExt(BETA.donateUrl); });
+  }
 
   // ===== Guide complet =====
   const guideBg = document.getElementById('guideBg'), guideBody = document.getElementById('guideBody'), guideNav = document.getElementById('guideNav'), guideSearch = document.getElementById('guideSearch');
