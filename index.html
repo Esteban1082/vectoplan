@@ -256,6 +256,36 @@
   #curveFloat #cfVal { min-width: 18px; text-align: right; color: var(--text); font-variant-numeric: tabular-nums; }
   #curveFloat .cfhint { color: var(--text-dim); font-size: 11px; }
 
+
+  /* guide */
+  #guideBg { position: fixed; inset: 0; background: rgba(0,0,0,.5); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); display: none; align-items: center; justify-content: center; z-index: 56; padding: 16px; }
+  #guideBg.show { display: flex; }
+  #guideBox { width: 980px; max-width: 100%; height: min(86vh, 760px); display: flex; flex-direction: column; background: rgba(34,34,38,.97); border: 1px solid var(--border); border-radius: 20px; box-shadow: 0 30px 90px rgba(0,0,0,.65); overflow: hidden; }
+  #guideHead { display: flex; align-items: center; gap: 10px; padding: 14px 18px; border-bottom: 1px solid var(--border); flex-wrap: wrap; }
+  #guideHead h2 { margin: 0; font-size: 16px; flex: 0 0 auto; }
+  #guideSearch { flex: 1; min-width: 160px; background: rgba(255,255,255,.08); border: 1px solid var(--border); color: var(--text); padding: 8px 12px; border-radius: 10px; font: inherit; font-size: 13px; outline: none; user-select: text; }
+  #guideSearch:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(10,132,255,.25); }
+  #guideMain { flex: 1; display: flex; min-height: 0; }
+  #guideNav { width: 220px; flex-shrink: 0; overflow-y: auto; padding: 10px; border-right: 1px solid var(--border); display: flex; flex-direction: column; gap: 2px; }
+  #guideNav button { justify-content: flex-start; background: transparent; text-align: left; padding: 8px 10px; font-size: 12.5px; white-space: normal; }
+  #guideNav button.on { background: rgba(10,132,255,.22); color: #fff; }
+  #guideNav button.dim { opacity: .35; }
+  #guideBody { flex: 1; overflow-y: auto; padding: 8px 26px 40px; user-select: text; scroll-behavior: smooth; }
+  #guideBody section { padding: 18px 0; border-bottom: 1px solid var(--border); }
+  #guideBody h3 { margin: 0 0 4px; font-size: 18px; letter-spacing: -.01em; }
+  #guideBody h3 small { display: block; font-size: 12.5px; font-weight: 400; color: var(--text-dim); margin-top: 3px; }
+  #guideBody h4 { margin: 16px 0 5px; font-size: 13px; color: var(--accent); }
+  #guideBody p, #guideBody li { font-size: 13px; line-height: 1.65; color: #d6d6dc; margin: 0 0 7px; }
+  #guideBody ul, #guideBody ol { padding-left: 20px; margin: 0 0 8px; }
+  #guideBody kbd { background: rgba(255,255,255,.12); border: 1px solid var(--border); border-bottom-width: 2px; border-radius: 6px; padding: 1px 6px; font: 600 11.5px ui-monospace, "SF Mono", Consolas, monospace; color: #fff; white-space: nowrap; }
+  #guideBody .tip { background: rgba(48,209,88,.10); border: 1px solid rgba(48,209,88,.3); border-radius: 12px; padding: 9px 13px; margin: 10px 0; font-size: 12.5px; color: #cfeedd; }
+  #guideBody .warn { background: rgba(255,159,10,.10); border: 1px solid rgba(255,159,10,.35); border-radius: 12px; padding: 9px 13px; margin: 10px 0; font-size: 12.5px; color: #f3dcb0; }
+  #guideBody table { width: 100%; border-collapse: collapse; margin: 6px 0 10px; }
+  #guideBody td { padding: 6px 8px; border-bottom: 1px solid var(--border); font-size: 12.5px; color: #d6d6dc; vertical-align: top; }
+  #guideBody td:first-child { width: 190px; }
+  #guideBody .none { display: none; }
+  @media (max-width: 760px) { #guideMain { flex-direction: column; } #guideNav { width: 100%; flex-direction: row; overflow-x: auto; border-right: 0; border-bottom: 1px solid var(--border); } #guideNav button { white-space: nowrap; } #guideBody { padding: 4px 16px 30px; } }
+
   /* guided tour */
   #tourVeil { position: fixed; inset: 0; z-index: 60; display: none; }
   #tourVeil.show { display: block; }
@@ -301,7 +331,7 @@
     <button id="btnSaveProj">💾 Sauver projet</button>
     <button id="btnExportDxf">⬇ Exporter DXF</button>
     <div class="spacer"></div>
-    <button id="btnTour" title="Visite guidée">❓ Aide</button>
+    <button id="btnGuide" title="Guide complet : toutes les fonctions expliquées">📖 Guide</button>
     <button id="btnAbout" title="À propos, licences, droits des plans">ℹ️</button>
     <button id="btnNew" class="danger">🗑 Nouveau</button>
   </header>
@@ -346,7 +376,7 @@
             <div><b>2</b><span>Lance la détection automatique</span></div>
             <div><b>3</b><span>Corrige, puis exporte en DXF</span></div>
           </div>
-          <div class="wbtns"><button id="btnTour2">▶ Visite guidée (30 s)</button><button id="btnAbout2">ℹ️ À propos</button></div>
+          <div class="wbtns"><button id="btnTour2">▶ Visite guidée (30 s)</button><button id="btnGuide3">📖 Guide complet</button><button id="btnAbout2">ℹ️ À propos</button></div>
           <div class="wpriv">🔒 Tout se passe sur ton ordinateur : ton plan n'est jamais envoyé sur internet.</div>
         </div>
       </div>
@@ -495,22 +525,10 @@
       </div>
 
       <div class="side-section" style="flex:1;">
-        <h3>Aide rapide</h3>
-        <div id="helpBox">
-          <b>Ligne/mur</b> : clic pour poser des points, <kbd>Entrée</kbd> ou double-clic pour finir, <kbd>Retour</kbd> annule le dernier point posé (pas besoin de tout refaire), <kbd>Échap</kbd> annule tout le tracé en cours.<br><br>
-          <b>Rectangle</b> : clic-glisser pour une ouverture rectangulaire. Si la forme réelle n'est pas un rectangle, utilise plutôt l'outil Ligne sur le calque OUVERTURE pour suivre le contour exact.<br><br>
-          <b>Courbe</b> : clic pour poser des points de passage, le tracé se lisse automatiquement entre eux (route qui tourne, mur arrondi...). Dès 2 points ça courbe déjà légèrement ; ajoute des points pour préciser la forme. <kbd>Entrée</kbd>/double-clic pour finir, <kbd>Retour</kbd> annule le dernier point. Réglages dans le panneau Accrochage : <b>Courbure</b> (2 points), <b>Souplesse</b> (plus haut = plus bouclé/arrondi), <b>Inverser</b> le sens (ou touche <kbd>X</kbd> pendant le tracé).<br><br>
-          <b>Aligner</b> (lignes et courbes) : sélectionne plusieurs lignes, ou une ligne et une courbe (<kbd>Maj+clic</kbd>) puis <kbd>A</kbd> : celles quasi parallèles et proches se mettent sur un même axe, et les bouts se prolongent pour se rejoindre.<br><br>
-          <b>Texte</b> : clic, puis saisir le texte.<br><br>
-          <b>Modifier une forme déjà tracée</b> (outil Sélection) : clic pour sélectionner, glisser un sommet (point blanc/jaune) pour le repositionner, glisser le trait pour déplacer toute la forme. <kbd>Maj+clic</kbd> ajoute/retire un élément à la sélection pour en déplacer plusieurs ensemble.<br><br>
-          <b>Flèches</b> déplacent la sélection précisément sur l'axe X ou Y (<kbd>Maj</kbd>+flèche = pas plus grand). <kbd>Ctrl+C</kbd> / <kbd>Ctrl+V</kbd> copie/colle.<br><br>
-          <b>Pan</b> : maintenir <kbd>Espace</kbd> + glisser, ou molette = zoom. <kbd>Home</kbd> ou le bouton 🎯 recentre le plan si tu l'as perdu de vue.<br><br>
-          <b>Détection automatique</b> : propose les traits droits nets du scan en pointillé cyan, sans jamais déplacer leur position (précision garantie). Un rond orange marque un bout qui n'a pas de voisin proche — repasse dessus avec l'outil Ligne/Courbe, il s'y accroche automatiquement. <b>Choisir une zone</b> limite l'analyse à une partie du scan (évite le texte, permet de traiter un plan compliqué zone par zone). <b>Détection poussée</b> teste plusieurs sensibilités et ne garde que les traits retrouvés sur plusieurs passes — plus lent, beaucoup moins de bruit. <b>Revue par groupe</b> affiche les segments connectés entre eux un groupe à la fois (triés du plus grand au plus petit), avec zoom auto et validation groupe par groupe ; tous les segments isolés sans aucun voisin sont réunis dans un seul groupe "Segments isolés" à traiter d'un coup plutôt qu'un par un. Clique une ligne cyan pour l'effacer, ou utilise la Gomme pour en effacer plusieurs d'un coup. Ne détecte que les lignes droites : les courbes restent à tracer à la main avec l'outil Courbe.<br><br>
-          <b>Gomme</b> (taille réglable dans Accrochage) : passe le cercle sur une ligne, elle est supprimée mais seulement jusqu'aux lignes qui la croisent : les deux parties de chaque côté sont conservées, séparées. En outil Sélection, un clic sur une suggestion la sélectionne (<kbd>Suppr</kbd> pour l'enlever).<br><br>
-          <b>Relier</b> (<kbd>J</kbd>) : clique un premier sommet puis un second (extrémités des lignes, suggestions comprises, rond cyan = sommet pris) : une ligne est créée entre les deux.<br><br>
-          <kbd>S</kbd> Sélection · <kbd>L</kbd> Ligne · <kbd>R</kbd> Rectangle · <kbd>C</kbd> Courbe · <kbd>T</kbd> Texte · <kbd>E</kbd> Gomme<br>
-          <kbd>Ctrl+Z</kbd> / <kbd>Ctrl+Y</kbd> annuler/refaire
-        </div>
+        <h3>Besoin d'aide ?</h3>
+        <div style="font-size:12px;color:var(--text-dim);line-height:1.5;margin-bottom:10px;">Le guide explique chaque outil pas à pas, avec les raccourcis clavier et des astuces.</div>
+        <button id="btnGuide2" class="active" style="width:100%;justify-content:center;">📖 Ouvrir le guide complet</button>
+        <button id="btnTour3" style="width:100%;justify-content:center;margin-top:6px;">▶ Visite guidée</button>
       </div>
     </div>
   </main>
@@ -551,6 +569,213 @@
     <div class="row" style="margin-top:16px;"><button id="aboutClose" class="active">Fermer</button></div>
   </div></div>
 </div>
+
+<div id="guideBg">
+  <div id="guideBox">
+    <div id="guideHead">
+      <h2>📖 Guide de Vectoplan</h2>
+      <input id="guideSearch" type="search" placeholder="Chercher une fonction (ex : miroir, gomme, courbe…)" autocomplete="off">
+      <button id="gdTour">▶ Visite guidée</button>
+      <button id="gdClose" class="active">Fermer</button>
+    </div>
+    <div id="guideMain">
+      <div id="guideNav"></div>
+      <div id="guideBody">
+
+<section data-t="Pour commencer">
+  <h3>Pour commencer<small>De ton plan scanné au fichier AutoCAD en 4 étapes.</small></h3>
+  <ol>
+    <li><b>Charge ton plan</b> : bouton « Charger un scan » (ou glisse le fichier sur la page). Formats : PDF, JPG, PNG. Pour un PDF de plusieurs pages, l'outil te demande quelle page ouvrir.</li>
+    <li><b>Lance la détection automatique</b> (panneau de droite) : les traits droits du plan apparaissent en bleu.</li>
+    <li><b>Corrige</b> : garde les bons traits, efface les mauvais, complète à la main (lignes, courbes, miroir…).</li>
+    <li><b>Exporte en DXF</b> : bouton « Exporter DXF ». Ouvre-le dans AutoCAD puis enregistre-le en DWG.</li>
+  </ol>
+  <div class="tip">Tout se passe sur ton ordinateur : ton plan n'est jamais envoyé sur internet. La première fois, l'outil télécharge ses composants (lecture PDF, détection) : il faut donc une connexion internet.</div>
+  <h4>Se déplacer dans le plan</h4>
+  <p>Molette = zoom. Pour déplacer le plan : maintiens <kbd>Espace</kbd> et glisse, ou prends l'outil ✋ Pan. <kbd>Home</kbd> ou le bouton 🎯 Recentrer ramène le plan à l'écran si tu l'as perdu.</p>
+  <h4>Sauver et reprendre ton travail</h4>
+  <p>« Sauver projet » télécharge un fichier .json avec tout ton travail (lignes, calques, échelle). « Ouvrir projet » le recharge plus tard. « Nouveau » repart de zéro (il demande confirmation avant d'effacer : pense à exporter avant).</p>
+  <p><kbd>Ctrl</kbd>+<kbd>Z</kbd> annule, <kbd>Ctrl</kbd>+<kbd>Y</kbd> refait, y compris pour les traits bleus de la détection.</p>
+</section>
+
+<section data-t="Détection automatique">
+  <h3>Détection automatique<small>Trouve les lignes droites du plan et te les propose en bleu.</small></h3>
+  <p>L'outil ne déplace jamais un trait : la position détectée est la position exacte sur le scan. Les traits bleus sont des <b>propositions</b> : rien n'est définitif tant que tu ne les valides pas.</p>
+  <h4>1. Choisir le type de plan</h4>
+  <ul>
+    <li><b>Plan net</b> : plan propre, traits bien marqués (réglage de base).</li>
+    <li><b>Scan abîmé</b> : scan taché, flou ou bruité. Moins de petits traits parasites.</li>
+    <li><b>Hachures</b> : murs hachurés, briques, ombrages. Ignore les séries de lignes parallèles serrées.</li>
+  </ul>
+  <h4>2. Réglages avancés (facultatif)</h4>
+  <ul>
+    <li><b>Sensibilité</b> : plus haut = détecte aussi les traits faibles ou fins.</li>
+    <li><b>Longueur mini</b> : plus haut = ignore les petits traits.</li>
+    <li><b>Fusion lignes proches</b> : plus haut = regroupe en une seule les lignes très proches (trait épais détecté en double, par exemple).</li>
+    <li><b>Prolonger pour joindre</b> : allonge ou raccourcit légèrement les bouts pour que les lignes se rejoignent.</li>
+    <li><b>Ignorer les hachures</b> : supprime les séries de lignes parallèles serrées.</li>
+  </ul>
+  <div class="tip">La détection poussée est toujours active : l'outil fait 3 passes et ne garde que les traits retrouvés plusieurs fois, ce qui enlève beaucoup de bruit.</div>
+  <h4>3. Choisir une zone (facultatif)</h4>
+  <p>« Choisir une zone » puis glisse un rectangle sur le plan : seule cette partie est analysée. Pratique pour éviter le texte, ou traiter un plan compliqué morceau par morceau. La croix ✕ retire la zone.</p>
+  <h4>4. Lancer la détection</h4>
+  <p>Les traits bleus apparaissent. Un <b>rond orange</b> marque un bout de ligne qui ne touche aucune autre ligne : repasse dessus avec l'outil Ligne, il s'y accroche automatiquement.</p>
+  <h4>5. Garder, corriger, valider</h4>
+  <ul>
+    <li><b>Accepter → MUR</b> : transforme tous les traits bleus en lignes définitives sur le calque affiché.</li>
+    <li><b>Effacer</b> : supprime tous les traits bleus.</li>
+    <li><b>Sélection partielle</b> : avec l'outil Sélection, glisse une zone sur le plan (tout trait que la zone touche est pris, même juste en passant) ou clique un trait, puis « Valider la sélection » ou « Aligner ». <kbd>Suppr</kbd> enlève les traits sélectionnés.</li>
+    <li><b>Revue par groupe</b> : affiche les traits connectés entre eux, un groupe à la fois, du plus grand au plus petit, avec zoom automatique. Les traits isolés sont réunis dans un seul groupe à traiter d'un coup.</li>
+  </ul>
+  <h4>PDF vectoriel : extraction exacte</h4>
+  <p>Si ton PDF vient d'un logiciel de dessin (traits vectoriels, pas une image scannée), un bouton « Extraire les traits exacts du PDF » apparaît : il récupère les traits tels quels, sans détection, donc sans erreur.</p>
+  <div class="warn">La détection ne trouve que des lignes droites. Les courbes se tracent à la main avec l'outil Courbe. Vérifie toujours le résultat, surtout sur un scan abîmé.</div>
+</section>
+
+<section data-t="Tracer à la main">
+  <h3>Tracer à la main<small>Ligne, rectangle, courbe, relier, texte.</small></h3>
+  <h4>Ligne / mur (<kbd>L</kbd>)</h4>
+  <p>Clique pour poser les points. <kbd>Entrée</kbd>, double-clic ou clic droit pour finir. <kbd>U</kbd> ou <kbd>Retour</kbd> annule le dernier point posé, <kbd>Échap</kbd> annule tout le tracé. <kbd>C</kbd> ferme la forme (à partir de 3 points).</p>
+  <h4>Taper une longueur exacte</h4>
+  <p>Pendant le tracé, tape directement un nombre (par exemple <kbd>3</kbd><kbd>.</kbd><kbd>5</kbd>) puis <kbd>Entrée</kbd> : la ligne se pose à cette longueur, dans la direction de la souris. Une étiquette suit le curseur avec la longueur et l'angle.</p>
+  <div class="tip">Pour que la longueur soit en mètres, calibre d'abord l'échelle (voir « Échelle et export »).</div>
+  <h4>Accrochage et angles</h4>
+  <ul>
+    <li><kbd>F3</kbd> : accrochage aux extrémités des lignes (rond jaune sous la souris).</li>
+    <li><kbd>F8</kbd> : mode orthogonal, les angles se calent par pas de 15°.</li>
+    <li><kbd>F7</kbd> : grille.</li>
+  </ul>
+  <p>Tu peux aussi cliquer sur les pastilles « ACCROCHAGE » et « ORTHO » en bas de l'écran.</p>
+  <h4>Rectangle (<kbd>R</kbd>)</h4>
+  <p>Clique-glisse pour une ouverture rectangulaire (calque OUVERTURE). Si la forme réelle n'est pas un rectangle, utilise plutôt l'outil Ligne.</p>
+  <h4>Courbe (<kbd>C</kbd>)</h4>
+  <p>Clique pour poser des points de passage : le tracé se lisse tout seul. <b>Avec seulement 2 points</b>, ça fait déjà une courbe, et c'est souvent suffisant.</p>
+  <p>Une barre apparaît en haut du plan pendant l'aperçu :</p>
+  <ul>
+    <li><b>Courbure</b> : curseur, ou flèches <kbd>↑</kbd> <kbd>↓</kbd> au clavier.</li>
+    <li><b>Inverser</b> : bouton, ou touche <kbd>X</kbd>, pour courber de l'autre côté.</li>
+    <li><b>Souplesse</b> (panneau Accrochage) : pour les courbes à plus de 2 points, plus haut = plus arrondi.</li>
+  </ul>
+  <p>Après avoir posé la courbe, sélectionne-la : la même barre revient, et tu peux déplacer ses points de contrôle.</p>
+  <h4>Relier (<kbd>J</kbd>)</h4>
+  <p>Clique un premier sommet, puis un second : une ligne se crée entre les deux. Les sommets des traits bleus comptent aussi (rond cyan = sommet pris). Idéal pour fermer un contour.</p>
+  <h4>Texte (<kbd>T</kbd>)</h4>
+  <p>Clique sur le plan, puis tape le texte. Il est exporté dans le DXF.</p>
+</section>
+
+<section data-t="Sélectionner et modifier">
+  <h3>Sélectionner et modifier<small>Déplacer, copier, aligner, supprimer.</small></h3>
+  <h4>Sélectionner (<kbd>S</kbd>)</h4>
+  <ul>
+    <li><b>Clic</b> sur une ligne (définitive ou bleue) pour la sélectionner.</li>
+    <li><kbd>Maj</kbd>+clic ajoute ou retire un élément.</li>
+    <li><b>Glisser une zone</b> : tout ce que la zone touche est sélectionné, même juste en passant.</li>
+  </ul>
+  <h4>Modifier</h4>
+  <ul>
+    <li>Glisse un <b>sommet</b> (point blanc ou jaune) pour le repositionner.</li>
+    <li>Glisse le <b>trait</b> pour déplacer toute la forme (ou toute la sélection).</li>
+    <li><kbd>←</kbd> <kbd>→</kbd> <kbd>↑</kbd> <kbd>↓</kbd> déplacent précisément la sélection, <kbd>Maj</kbd>+flèche = plus grand pas.</li>
+    <li><kbd>Ctrl</kbd>+<kbd>C</kbd> / <kbd>Ctrl</kbd>+<kbd>V</kbd> : copier / coller. <kbd>Suppr</kbd> : supprimer.</li>
+  </ul>
+  <h4>Aligner (<kbd>A</kbd>)</h4>
+  <p>Sélectionne plusieurs lignes (ou une ligne et une courbe), puis « Aligner » : celles à peu près parallèles et proches se posent sur un même axe, et leurs bouts se prolongent pour se rejoindre. Ça marche aussi sur les traits bleus, ensemble avec les lignes définitives. Le curseur « Fusion alignement » (panneau Accrochage) règle la portée.</p>
+  <h4>Guides intelligents</h4>
+  <p>Quand tu déplaces une forme ou que tu traces, des guides roses apparaissent :</p>
+  <ul>
+    <li><b>= Aligné</b> : un bord, le centre ou un sommet est au même niveau (en hauteur ou en largeur) qu'un autre point du plan. La forme se cale dessus.</li>
+    <li><b>Parallèle / Perpendiculaire</b> : en traçant une ligne ou en tirant son extrémité, si l'angle est à environ 2° d'une autre ligne, celle-ci s'illumine et le point se cale.</li>
+  </ul>
+  <div class="tip">Maintiens <kbd>Alt</kbd> pendant le geste pour couper les guides.</div>
+</section>
+
+<section data-t="Miroir (symétrie)">
+  <h3>Miroir (symétrie)<small>Dessine une moitié, l'autre se fait toute seule.</small></h3>
+  <h4>1. Placer l'axe</h4>
+  <p>Dans le panneau « Miroir (symétrie) » : <b>Vertical</b> ou <b>Horizontal</b> (un clic à l'endroit voulu), ou <b>Libre</b> (deux clics, pour un axe incliné). L'axe apparaît en violet.</p>
+  <p><b>Aperçu :</b> si tu as déjà sélectionné des éléments, leur reflet s'affiche en violet et suit ta souris : tu vois où il tombera avant de cliquer.</p>
+  <h4>2. Miroir en direct</h4>
+  <p>Active l'interrupteur : tout ce que tu traces (ligne, rectangle, courbe) est reflété de l'autre côté, avec un aperçu en pointillés violets. Les deux côtés restent <b>liés</b> : si tu déplaces un sommet d'un côté, l'autre suit.</p>
+  <h4>3. Dupliquer la sélection en miroir</h4>
+  <p>Pour un dessin déjà fait (lignes, courbes ou traits bleus) : sélectionne-les puis clique le bouton. La copie est indépendante.</p>
+  <div class="tip">Exemple : une porte. Détecte ou trace la moitié basse, place l'axe au milieu de la porte, puis « Dupliquer la sélection en miroir ». Même principe pour un axe vertical.</div>
+  <div class="warn">L'axe n'est pas sauvegardé dans le projet : replace-le en rouvrant un projet. Les traits validés depuis la détection ne sont pas reflétés automatiquement : utilise « Dupliquer la sélection en miroir ».</div>
+</section>
+
+<section data-t="Gomme">
+  <h3>Gomme<small>Efface sans abîmer le reste.</small></h3>
+  <p>Outil 🧹 (<kbd>E</kbd>) : maintiens le bouton et passe le cercle sur une ligne. Elle est effacée <b>seulement jusqu'aux lignes qui la croisent</b> : les parties de chaque côté sont conservées, séparées. La taille se règle dans le panneau Accrochage.</p>
+  <h4>Ce que la gomme efface</h4>
+  <p>Une barre en haut du plan permet de choisir :</p>
+  <ul>
+    <li><b>Tout</b> : traits bleus de la détection et lignes définitives.</li>
+    <li><b>Détection</b> : seulement les traits bleus.</li>
+    <li><b>Définitives</b> : seulement les lignes validées ou tracées.</li>
+  </ul>
+  <h4>Effacer un tronçon précis</h4>
+  <p><kbd>Ctrl</kbd> ou <kbd>Alt</kbd> + clic avec la gomme : efface uniquement le tronçon entre les deux lignes qui croisent celle que tu vises.</p>
+  <div class="tip">Avec l'outil Sélection, un clic sur un trait bleu le sélectionne, puis <kbd>Suppr</kbd> l'enlève.</div>
+</section>
+
+<section data-t="Échelle et export">
+  <h3>Échelle et export<small>Mettre à la bonne taille et ouvrir dans AutoCAD.</small></h3>
+  <h4>Calibrer l'échelle</h4>
+  <p>Clique « Calibrer l'échelle », puis deux points dont tu connais la distance réelle (une cote écrite sur le plan, une réglette…), et tape la distance en mètres. L'export DXF sortira alors à la bonne taille. Le panneau « Échelle » affiche la valeur.</p>
+  <h4>Calques</h4>
+  <p>Chaque ligne appartient à un calque (MUR, OUVERTURE, COTE, TEXTE…) : un clic sur un calque le rend actif, la case permet de le cacher. Les calques sont repris dans le DXF.</p>
+  <h4>Le scan en fond</h4>
+  <p>Le panneau « Scan » règle l'opacité du scan et permet de le masquer pour mieux voir ton dessin.</p>
+  <h4>Exporter</h4>
+  <p>« Exporter DXF » télécharge un fichier prêt pour AutoCAD (ouvre-le puis « Enregistrer sous » en DWG). Si rien n'est à exporter, valide d'abord les traits bleus ou trace des lignes.</p>
+  <div class="tip">Sans calibration, le DXF est en pixels : pense à calibrer avant d'exporter si tu veux des mesures réelles.</div>
+</section>
+
+<section data-t="Raccourcis clavier">
+  <h3>Raccourcis clavier<small>Pour aller plus vite.</small></h3>
+  <table>
+    <tr><td><kbd>S</kbd> <kbd>L</kbd> <kbd>R</kbd> <kbd>C</kbd> <kbd>T</kbd> <kbd>E</kbd> <kbd>J</kbd></td><td>Sélection · Ligne · Rectangle · Courbe · Texte · Gomme · Relier</td></tr>
+    <tr><td><kbd>Entrée</kbd> / double-clic / clic droit</td><td>Terminer le tracé</td></tr>
+    <tr><td><kbd>U</kbd> / <kbd>Retour</kbd></td><td>Annuler le dernier point posé</td></tr>
+    <tr><td><kbd>Échap</kbd></td><td>Annuler le tracé en cours</td></tr>
+    <tr><td>Un nombre + <kbd>Entrée</kbd></td><td>Poser une ligne à une longueur exacte</td></tr>
+    <tr><td><kbd>F3</kbd> · <kbd>F8</kbd> · <kbd>F7</kbd></td><td>Accrochage · Ortho 15° · Grille</td></tr>
+    <tr><td><kbd>X</kbd> · <kbd>↑</kbd> <kbd>↓</kbd></td><td>Courbe : inverser · courbure (pendant l'aperçu)</td></tr>
+    <tr><td><kbd>A</kbd></td><td>Aligner la sélection</td></tr>
+    <tr><td><kbd>Alt</kbd> (maintenu)</td><td>Couper les guides intelligents</td></tr>
+    <tr><td><kbd>Ctrl</kbd>/<kbd>Alt</kbd> + clic (gomme)</td><td>Effacer un tronçon entre deux croisements</td></tr>
+    <tr><td><kbd>Maj</kbd> + clic</td><td>Ajouter ou retirer de la sélection</td></tr>
+    <tr><td>Flèches · <kbd>Maj</kbd> + flèches</td><td>Déplacer la sélection (pas fin · grand pas)</td></tr>
+    <tr><td><kbd>Ctrl</kbd>+<kbd>C</kbd> · <kbd>Ctrl</kbd>+<kbd>V</kbd></td><td>Copier · Coller</td></tr>
+    <tr><td><kbd>Suppr</kbd></td><td>Supprimer la sélection</td></tr>
+    <tr><td><kbd>Ctrl</kbd>+<kbd>Z</kbd> · <kbd>Ctrl</kbd>+<kbd>Y</kbd></td><td>Annuler · Refaire</td></tr>
+    <tr><td><kbd>Espace</kbd> + glisser · molette · <kbd>Home</kbd></td><td>Déplacer · Zoom · Recentrer</td></tr>
+  </table>
+</section>
+
+<section data-t="Problèmes fréquents">
+  <h3>Problèmes fréquents<small>Quand le résultat n'est pas celui attendu.</small></h3>
+  <h4>La détection trouve trop de petits traits parasites</h4>
+  <p>Choisis « Scan abîmé », ou monte « Longueur mini » et « Fusion lignes proches » dans les réglages avancés. Utilise « Choisir une zone » pour exclure le texte et les cartouches.</p>
+  <h4>La détection rate des traits</h4>
+  <p>Remonte « Sensibilité » et baisse « Longueur mini ». Complète ensuite à la main avec l'outil Ligne (il s'accroche aux bouts existants).</p>
+  <h4>Un mur épais donne deux lignes</h4>
+  <p>Monte « Fusion lignes proches », ou sélectionne les deux lignes et clique « Aligner ».</p>
+  <h4>Le plan est couvert de hachures (briques, ombrages)</h4>
+  <p>Choisis le préréglage « Hachures », ou active « Ignorer les hachures ». Tu peux aussi n'analyser que les zones sans hachures.</p>
+  <h4>Un message dit qu'un composant n'a pas pu être téléchargé</h4>
+  <p>Vérifie ta connexion internet puis recharge la page. La première utilisation en a besoin.</p>
+  <h4>Le PDF ne s'ouvre pas</h4>
+  <p>S'il est protégé par un mot de passe, enlève la protection. Sinon, exporte le plan en image (JPG ou PNG) depuis ton lecteur PDF et charge l'image.</p>
+  <h4>J'ai perdu mon plan à l'écran</h4>
+  <p>Appuie sur <kbd>Home</kbd> ou clique 🎯 Recentrer.</p>
+  <div class="warn">Vectoplan est un outil d'aide au dessin. Vérifie toujours le résultat avant de t'en servir pour un chantier, un permis ou un document officiel, et assure-toi d'avoir le droit de reproduire les plans que tu charges.</div>
+</section>
+
+      </div>
+    </div>
+  </div>
+</div>
+
 <div id="toast"></div>
 
 <div id="modalBg">
@@ -3378,6 +3603,37 @@
     }
   }, true);
 
+
+  // ===== Guide complet =====
+  const guideBg = document.getElementById('guideBg'), guideBody = document.getElementById('guideBody'), guideNav = document.getElementById('guideNav'), guideSearch = document.getElementById('guideSearch');
+  const gSecs = Array.from(guideBody.querySelectorAll('section'));
+  gSecs.forEach((sec, i) => {
+    const b = document.createElement('button'); b.textContent = sec.dataset.t; b.dataset.i = i;
+    b.addEventListener('click', () => {
+      guideSearch.value = ''; guideFilter();
+      guideBody.scrollTo({ top: sec.offsetTop - 6, behavior: 'smooth' });
+      guideNav.querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b));
+    });
+    guideNav.appendChild(b);
+  });
+  function guideFilter(){
+    const q = guideSearch.value.trim().toLowerCase();
+    gSecs.forEach((sec, i) => {
+      const hit = !q || sec.textContent.toLowerCase().includes(q);
+      sec.classList.toggle('none', !hit);
+      guideNav.children[i].classList.toggle('dim', !hit);
+    });
+  }
+  guideSearch.addEventListener('input', guideFilter);
+  function openGuide(){ guideBg.classList.add('show'); guideBody.scrollTop = 0; guideNav.querySelectorAll('button').forEach(x => x.classList.remove('on')); guideNav.children[0].classList.add('on'); }
+  function closeGuide(){ guideBg.classList.remove('show'); }
+  ['btnGuide','btnGuide2','btnGuide3'].forEach(id => document.getElementById(id).addEventListener('click', openGuide));
+  document.getElementById('gdClose').addEventListener('click', closeGuide);
+  document.getElementById('gdTour').addEventListener('click', () => { closeGuide(); setTimeout(tourStart, 120); });
+  document.getElementById('btnTour3').addEventListener('click', () => tourStart());
+  guideBg.addEventListener('mousedown', e => { if (e.target === guideBg) closeGuide(); });
+  window.addEventListener('keydown', e => { if (e.key === 'Escape' && guideBg.classList.contains('show')){ closeGuide(); e.stopImmediatePropagation(); } }, true);
+
   // guided tour
   const TOUR = [
     { sel: 'header .file-btn', t: '1 · Charge ton plan', p: "Clique ici (ou glisse ton fichier sur la page) : PDF, JPG ou PNG. Pour un PDF de plusieurs pages, on te demande laquelle ouvrir." },
@@ -3413,7 +3669,6 @@
   function tourEnd(){ veil.classList.remove('show'); tourI = -1; try { localStorage.setItem('vp_tour_done', '1'); } catch(_) {} }
   document.getElementById('tourNext').addEventListener('click', () => tourShow(tourI + 1));
   document.getElementById('tourSkip').addEventListener('click', tourEnd);
-  document.getElementById('btnTour').addEventListener('click', tourStart);
   document.getElementById('btnTour2').addEventListener('click', tourStart);
   window.addEventListener('resize', () => { if (tourI >= 0) tourShow(tourI); });
   window.addEventListener('keydown', e => { if (tourI >= 0 && e.key === 'Escape') tourEnd(); }, true);
