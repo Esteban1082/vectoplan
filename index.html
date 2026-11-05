@@ -503,7 +503,7 @@
           <input type="range" id="rngCurveBulge" min="1" max="40" value="9">
         </div>
         <div class="toggle-row">
-          <span title="S'applique aux courbes de 3 points et plus (une courbe à 2 points est un arc de cercle parfait)">Souplesse (3 pts et +)</span>
+          <span title="Réglage fin de l'arrondi des courbes de 3 points et plus (la Courbure le règle aussi). Une courbe à 2 points est un arc de cercle parfait.">Souplesse (3 pts et +)</span>
           <input type="range" id="rngCurveTension" min="10" max="120" value="50">
         </div>
         <div class="toggle-row">
@@ -677,9 +677,9 @@
   <p>Clique pour poser des points de passage : le tracé se lisse tout seul. <b>Avec seulement 2 points</b>, ça fait déjà une courbe, et c'est souvent suffisant.</p>
   <p>Une barre apparaît en haut du plan pendant l'aperçu :</p>
   <ul>
-    <li><b>Courbure</b> : curseur, ou flèches <kbd>↑</kbd> <kbd>↓</kbd> au clavier.</li>
+    <li><b>Courbure</b> : curseur, ou flèches <kbd>↑</kbd> <kbd>↓</kbd> au clavier. Avec 2 points, c'est la profondeur de l'arc ; avec 3 points et plus, c'est l'arrondi de la courbe.</li>
     <li><b>Inverser</b> : bouton, ou touche <kbd>X</kbd>, pour courber de l'autre côté.</li>
-    <li><b>Souplesse</b> (panneau Accrochage) : pour les courbes à plus de 2 points, plus haut = plus arrondi.</li>
+    <li><b>Souplesse</b> (panneau Accrochage) : réglage fin de l'arrondi pour les courbes de 3 points et plus.</li>
   </ul>
   <p>Après avoir posé la courbe, sélectionne-la : la même barre revient, et tu peux déplacer ses points de contrôle.</p>
   <h4>Relier (<kbd>J</kbd>)</h4>
@@ -2739,9 +2739,17 @@
   }
   document.getElementById('btnDeleteSel').addEventListener('click', deleteSelected);
   document.getElementById('rngCurveBulge').addEventListener('input', e => {
-    const sign = state.curveBulge < 0 ? -1 : 1;
-    state.curveBulge = sign*parseInt(e.target.value);
-    selectedCurves().forEach(c => { const sg = c.bulge < 0 ? -1 : 1; c.bulge = sg*parseInt(e.target.value); regenCurve(c); });
+    const sign = state.curveBulge < 0 ? -1 : 1, v = parseInt(e.target.value);
+    state.curveBulge = sign*v;
+    // « Courbure » règle aussi les courbes de 3 points et plus : elle pilote leur arrondi (souplesse)
+    state.curveTension = 0.1 + (v-1)/39*0.7;
+    const tr = document.getElementById('rngCurveTension'); tr.value = Math.round(state.curveTension*100);
+    if (tr.nextElementSibling && tr.nextElementSibling.tagName === 'B') tr.nextElementSibling.textContent = tr.value;
+    selectedCurves().forEach(c => {
+      if (c.ctrl && c.ctrl.length > 2) c.tension = state.curveTension;
+      else { const sg = c.bulge < 0 ? -1 : 1; c.bulge = sg*v; }
+      regenCurve(c);
+    });
     render();
   });
   document.getElementById('rngCurveTension').addEventListener('input', e => { state.curveTension = parseInt(e.target.value)/100; selectedCurves().forEach(c => { c.tension = state.curveTension; regenCurve(c); }); render(); });
@@ -3619,9 +3627,9 @@
 
   // ===== Réglage de la courbe en direct (aperçu + courbe sélectionnée) =====
   const cf = document.getElementById('curveFloat'), cfB = document.getElementById('cfBulge'), cfV = document.getElementById('cfVal');
-  function curveBulgeNow(){ const c = selectedCurves()[0]; return Math.abs(c && state.tool === 'select' ? c.bulge : state.curveBulge); }
+  function curveBulgeNow(){ const c = selectedCurves()[0]; if (c && state.tool === 'select') return c.ctrl.length > 2 ? Math.max(1, Math.min(40, Math.round((c.tension-0.1)/0.7*39+1))) : Math.abs(c.bulge); return Math.abs(state.curveBulge); }
   function syncCurveFloat(){
-    const show = state.tool === 'curve' || (state.tool === 'select' && selectedCurves().length > 0 && selectedCurves().some(c => c.ctrl && c.ctrl.length === 2));
+    const show = state.tool === 'curve' || (state.tool === 'select' && selectedCurves().length > 0);
     cf.classList.toggle('show', show);
     if (show && document.activeElement !== cfB){ const v = Math.round(curveBulgeNow()); cfB.value = v; cfV.textContent = v; }
   }
