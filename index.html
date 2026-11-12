@@ -237,7 +237,7 @@
 
   /* presets + advanced */
   .presets { display: flex; gap: 4px; background: var(--panel2); padding: 3px; border-radius: 11px; margin-bottom: 10px; }
-  .presets button { flex: 1; background: transparent; padding: 7px 4px; font-size: 11.5px; border-radius: 8px; }
+  .presets button { flex: 1; background: transparent; padding: 7px 2px; font-size: 11px; border-radius: 8px; }
   .presets button.active { background: var(--accent); }
   .adv-toggle { width: 100%; justify-content: space-between; margin-bottom: 6px; background: transparent; color: var(--text-dim); font-size: 11.5px; padding: 6px 4px; }
   #advBox { display: none; }
@@ -343,7 +343,7 @@
 <div id="app">
 
   <header>
-    <h1>Vecto<span>plan</span> <em class="beta" id="betaBadge" title="Version en développement : ton avis compte">v0.5 bêta</em></h1>
+    <h1>Vecto<span>plan</span> <em class="beta" id="betaBadge" title="Version en développement : ton avis compte">v0.6 bêta</em></h1>
     <label class="file-btn btn-primary" title="Charger un plan (PDF, JPG ou PNG)">📂 Charger un plan<input type="file" id="imgInput" accept="image/*,.pdf,application/pdf"></label>
     <div class="grp">
       <button id="btnCalib" title="Calibrer l'échelle : clique 2 points dont tu connais la distance">📏</button>
@@ -410,7 +410,7 @@
           </div>
           <div class="wbtns"><button id="btnTour2">▶ Visite guidée (30 s)</button><button id="btnGuide3">📖 Guide complet</button><button id="btnAbout2">ℹ️ À propos</button></div>
           <div class="wpriv">🔒 Tout se passe sur ton ordinateur : ton plan n'est jamais envoyé sur internet.</div>
-          <div class="wbeta"><b>🚧 Version 0.5 bêta, toujours en développement.</b> Ça fonctionne déjà, mais la détection demande encore des retouches sur les scans abîmés. Dis-moi ce qui manque ou ce qui te gêne !
+          <div class="wbeta"><b>🚧 Version 0.6 bêta, toujours en développement.</b> Ça fonctionne déjà, mais le résultat demande encore des retouches sur les scans abîmés. Dis-moi ce qui manque ou ce qui te gêne !
             <div class="wbtns" style="margin:10px 0 0"><button id="btnFeedback2" class="active">💬 Donner mon avis</button><button id="btnDonate2" style="display:none">☕ Soutenir le projet</button></div></div>
         </div>
       </div>
@@ -426,6 +426,7 @@
           <button data-preset="net" class="active" title="Plan propre, traits nets (réglages de base)">Plan net</button>
           <button data-preset="abime" title="Scan taché, flou ou bruité : moins de petits traits parasites">Scan abîmé</button>
           <button data-preset="hachures" title="Murs hachurés, briques, ombrages : ignore les hachures">Hachures</button>
+          <button data-preset="photo" title="Photo d'une façade ou d'un bâtiment (pas un dessin) : cherche les bords plutôt que les traits">Photo</button>
         </div>
         <button class="adv-toggle" id="btnAdv"><span>⚙️ Réglages avancés</span><span id="advArrow">⌄</span></button>
         <div id="advBox">
@@ -435,7 +436,7 @@
         <div class="toggle-row"><span>Prolonger pour joindre</span><label class="switch"><input type="checkbox" id="chkExtend"><span class="slider-sw"></span></label></div>
         <div class="toggle-row"><span>Ignorer les hachures</span><label class="switch"><input type="checkbox" id="chkHatch"><span class="slider-sw"></span></label></div>
         <input type="checkbox" id="chkDeepDetect" checked hidden>
-        <div style="font-size:11px;color:var(--text-dim);line-height:1.4;margin:2px 0 8px 0;">✓ Détection poussée toujours active : 3 passes de sensibilité, seuls les traits retrouvés sur plusieurs passes sont gardés.</div>
+        <div style="font-size:11px;color:var(--text-dim);line-height:1.4;margin:2px 0 8px 0;">✓ La détection suit le centre de chaque trait : un trait = une ligne, coins et croisements reliés, texte ignoré autant que possible.</div>
         </div>
         <button id="btnPickZone" style="width:100%;justify-content:center;">📐 Choisir une zone</button>
         <div id="zoneStatus" style="font-size:11px;color:var(--text-dim);margin-top:6px;display:none;">
@@ -589,7 +590,7 @@
   <div id="modalBox" class="aboutwrap" style="width:auto;"><div id="aboutBox">
     <h4>Vectoplan <span style="color:var(--text-dim);font-weight:400;">(nom provisoire)</span></h4>
     <p>Outil gratuit pour transformer un plan scanné ou un PDF en dessin vectoriel (DXF) que tu ouvres dans AutoCAD.</p>
-    <h6>Version 0.5 bêta</h6>
+    <h6>Version 0.6 bêta</h6>
     <p>Vectoplan est en développement. Il fonctionne déjà, mais le résultat demande encore un travail de correction, surtout sur les scans abîmés. Ton avis compte : ce qui manque, ce qui te gêne, les fonctions que tu voudrais. Tout est ouvert.</p>
     <p><a href="#" id="aboutFeedback">💬 Donner mon avis</a> <span id="aboutDonateWrap" style="display:none"> · <a href="#" id="aboutDonate">☕ Soutenir le projet</a></span></p>
     <h6>Confidentialité</h6>
@@ -637,22 +638,29 @@
 
 <section data-t="Détection automatique">
   <h3>Détection automatique<small>Trouve les lignes droites du plan et te les propose en bleu.</small></h3>
-  <p>L'outil ne déplace jamais un trait : la position détectée est la position exacte sur le scan. Les traits bleus sont des <b>propositions</b> : rien n'est définitif tant que tu ne les valides pas.</p>
+  <p>La détection suit le <b>centre</b> de chaque trait du plan : un trait donne une seule ligne, posée sur l'encre, et les coins et croisements restent reliés. Les traits bleus sont des <b>propositions</b> : rien n'est définitif tant que tu ne les valides pas.</p>
+  <ul>
+    <li>Les <b>courbes</b> (arcs de porte, escaliers) sont suivies par une suite de petits segments.</li>
+    <li>Les <b>murs pleins épais</b> sont tracés par leur contour.</li>
+    <li>Les <b>tirets</b> alignés sont réunis en une seule ligne.</li>
+    <li>Le <b>texte</b> et les cotes écrites sont ignorés autant que possible.</li>
+  </ul>
   <h4>1. Choisir le type de plan</h4>
   <ul>
     <li><b>Plan net</b> : plan propre, traits bien marqués (réglage de base).</li>
     <li><b>Scan abîmé</b> : scan taché, flou ou bruité. Moins de petits traits parasites.</li>
-    <li><b>Hachures</b> : murs hachurés, briques, ombrages. Ignore les séries de lignes parallèles serrées.</li>
+    <li><b>Hachures</b> : murs hachurés, briques, ombrages. Ignore les séries de lignes parallèles serrées, en gardant les lignes qui bordent la zone (appuis, linteaux, sol).</li>
+    <li><b>Photo</b> : photo d'une façade ou d'un bâtiment, pas un dessin. Cherche les bords des formes plutôt que des traits.</li>
   </ul>
   <h4>2. Réglages avancés (facultatif)</h4>
   <ul>
     <li><b>Sensibilité</b> : plus haut = détecte aussi les traits faibles ou fins.</li>
     <li><b>Longueur mini</b> : plus haut = ignore les petits traits.</li>
-    <li><b>Fusion lignes proches</b> : plus haut = regroupe en une seule les lignes très proches (trait épais détecté en double, par exemple).</li>
+    <li><b>Fusion lignes proches</b> : plus haut = regroupe en une seule les lignes parallèles très proches (double trait que tu veux simplifier).</li>
     <li><b>Prolonger pour joindre</b> : allonge ou raccourcit légèrement les bouts pour que les lignes se rejoignent.</li>
     <li><b>Ignorer les hachures</b> : supprime les séries de lignes parallèles serrées.</li>
   </ul>
-  <div class="tip">La détection poussée est toujours active : l'outil fait 3 passes et ne garde que les traits retrouvés plusieurs fois, ce qui enlève beaucoup de bruit.</div>
+  <div class="tip">Un trait pâle n'est gardé que s'il contient une partie bien marquée : ça enlève les taches et le grain du papier. Si des traits pâles manquent, monte la sensibilité ; si du bruit apparaît, baisse-la.</div>
   <h4>3. Choisir une zone (facultatif)</h4>
   <p>« Choisir une zone » puis glisse un rectangle sur le plan : seule cette partie est analysée. Pratique pour éviter le texte, ou traiter un plan compliqué morceau par morceau. La croix ✕ retire la zone.</p>
   <h4>4. Lancer la détection</h4>
@@ -666,7 +674,7 @@
   </ul>
   <h4>PDF vectoriel : extraction exacte</h4>
   <p>Si ton PDF vient d'un logiciel de dessin (traits vectoriels, pas une image scannée), un bouton « Extraire les traits exacts du PDF » apparaît : il récupère les traits tels quels, sans détection, donc sans erreur.</p>
-  <div class="warn">La détection ne trouve que des lignes droites. Les courbes se tracent à la main avec l'outil Courbe. Vérifie toujours le résultat, surtout sur un scan abîmé.</div>
+  <div class="warn">Les courbes sont détectées en petits segments droits : pour un arc parfait, retrace-le avec l'outil Courbe. Un pli du papier ou une tache allongée peut être pris pour un trait. Vérifie toujours le résultat, surtout sur un scan abîmé.</div>
 </section>
 
 <section data-t="Tracer à la main">
@@ -790,7 +798,7 @@
 </section>
 
 <section data-t="Version bêta et avis">
-  <h3>Version bêta et avis<small>Vectoplan 0.5 : en développement, ouvert à tes idées.</small></h3>
+  <h3>Version bêta et avis<small>Vectoplan 0.6 : en développement, ouvert à tes idées.</small></h3>
   <p>L'outil fonctionne déjà, mais la détection automatique n'est pas parfaite : sur un scan abîmé, compte encore sur un travail de correction derrière. Chaque retour aide à l'améliorer.</p>
   <h4>Donner ton avis</h4>
   <p>Clique sur 💬 en haut. Dis ce qui marche, ce qui bloque, et quelles fonctions tu voudrais. Si tu peux, précise le type de plan (propre, scan abîmé, hachuré) et le préréglage utilisé. <b>N'envoie jamais un plan confidentiel</b> : décris le problème ou joins une capture sans données sensibles.</p>
@@ -804,8 +812,8 @@
   <p>Choisis « Scan abîmé », ou monte « Longueur mini » et « Fusion lignes proches » dans les réglages avancés. Utilise « Choisir une zone » pour exclure le texte et les cartouches.</p>
   <h4>La détection rate des traits</h4>
   <p>Remonte « Sensibilité » et baisse « Longueur mini ». Complète ensuite à la main avec l'outil Ligne (il s'accroche aux bouts existants).</p>
-  <h4>Un mur épais donne deux lignes</h4>
-  <p>Monte « Fusion lignes proches », ou sélectionne les deux lignes et clique « Aligner ».</p>
+  <h4>Un double trait donne deux lignes</h4>
+  <p>C'est voulu : deux traits distincts sur le plan donnent deux lignes. Pour n'en garder qu'une, monte « Fusion lignes proches », ou sélectionne les deux lignes et clique « Aligner ».</p>
   <h4>Le plan est couvert de hachures (briques, ombrages)</h4>
   <p>Choisis le préréglage « Hachures », ou active « Ignorer les hachures ». Tu peux aussi n'analyser que les zones sans hachures.</p>
   <h4>Un message dit qu'un composant n'a pas pu être téléchargé</h4>
@@ -1240,7 +1248,7 @@
 
   // Drops hatching: runs of many parallel, closely spaced lines (brick courses, shading).
   function removeHatching(items, diag){
-    const near = diag*0.03, minN = 6;
+    const near = diag*0.022;
     const info = items.map(m => {
       const [a,b] = m.points, ang = Math.atan2(b[1]-a[1], b[0]-a[0]);
       return { a, b, ang: ((ang%Math.PI)+Math.PI)%Math.PI, len: m.len };
@@ -1248,7 +1256,7 @@
     return items.filter((m,i) => {
       const p = info[i], c = Math.cos(p.ang), sn = Math.sin(p.ang);
       const t0 = p.a[0]*c+p.a[1]*sn, t1 = p.b[0]*c+p.b[1]*sn, d0 = -p.a[0]*sn+p.a[1]*c;
-      let n = 0;
+      let up = 0, down = 0;
       for (let j=0;j<info.length;j++){
         if (j===i) continue;
         const q = info[j]; let da = Math.abs(p.ang-q.ang); da = Math.min(da, Math.PI-da);
@@ -1256,9 +1264,9 @@
         const dq = -q.a[0]*sn+q.a[1]*c; if (Math.abs(dq-d0) > near || Math.abs(dq-d0) < 1) continue;
         const u0 = q.a[0]*c+q.a[1]*sn, u1 = q.b[0]*c+q.b[1]*sn;
         const ov = Math.min(Math.max(t0,t1), Math.max(u0,u1)) - Math.max(Math.min(t0,t1), Math.min(u0,u1));
-        if (ov >= 0.4*Math.min(p.len, q.len)) n++;
+        if (ov >= 0.4*Math.min(p.len, q.len)){ if (dq > d0) up++; else down++; }
       }
-      return n < minN;
+      return !(up >= 3 && down >= 3);          // les lignes en bord de zone hachurée (appuis, linteaux, sol) sont gardées
     });
   }
 
@@ -1562,6 +1570,500 @@
     return out;
   }
 
+  // ===== Détection par squelette : suit le CENTRE des traits (un trait = une ligne), =====
+  // ===== garde les jonctions reliées, puis redresse et raccorde les segments.        =====
+  function skThin(img, W){
+    let n = 0; for (let i=0;i<img.length;i++) if (img[i]) n++;
+    const list = new Int32Array(n); n = 0; for (let i=0;i<img.length;i++) if (img[i]) list[n++] = i;
+    let cnt = n; const del = new Int32Array(n);
+    for (let iter=0; iter<80; iter++){
+      let removed = 0;
+      for (let step=0; step<2; step++){
+        let nd = 0;
+        for (let k=0;k<cnt;k++){
+          const i = list[k]; if (!img[i]) continue;
+          const p2=img[i-W], p3=img[i-W+1], p4=img[i+1], p5=img[i+W+1], p6=img[i+W], p7=img[i+W-1], p8=img[i-1], p9=img[i-W-1];
+          const b = p2+p3+p4+p5+p6+p7+p8+p9;
+          if (b<2 || b>6) continue;
+          const a = ((p2^1)&p3)+((p3^1)&p4)+((p4^1)&p5)+((p5^1)&p6)+((p6^1)&p7)+((p7^1)&p8)+((p8^1)&p9)+((p9^1)&p2);
+          if (a !== 1) continue;
+          if (step === 0){ if ((p2&p4&p6) || (p4&p6&p8)) continue; }
+          else { if ((p2&p4&p8) || (p2&p6&p8)) continue; }
+          del[nd++] = i;
+        }
+        for (let k=0;k<nd;k++) img[del[k]] = 0;
+        removed += nd;
+      }
+      if (!removed) break;
+      let m = 0; for (let k=0;k<cnt;k++){ const i = list[k]; if (img[i]) list[m++] = i; } cnt = m;
+    }
+    // retire les « marches d'escalier » pour un squelette d'un pixel d'épaisseur
+    for (let pass=0; pass<2; pass++){
+      for (let k=0;k<cnt;k++){
+        const i = list[k]; if (!img[i]) continue;
+        const N=img[i-W], NE=img[i-W+1], E=img[i+1], SE=img[i+W+1], S=img[i+W], SW=img[i+W-1], Wp=img[i-1], NW=img[i-W-1];
+        let kill;
+        if (pass === 0) kill = N && ((E && !NE && !SW && (!Wp || !S)) || (Wp && !NW && !SE && (!E || !S)));
+        else kill = S && ((E && !SE && !NW && (!Wp || !N)) || (Wp && !SW && !NE && (!E || !N)));
+        if (kill) img[i] = 0;
+      }
+    }
+    let m = 0; for (let k=0;k<cnt;k++){ const i = list[k]; if (img[i]) list[m++] = i; }
+    return list.subarray(0, m);
+  }
+
+  function skeletonDetect(off, P){
+    const W = off.width, H = off.height, diag = P.diag;
+    const O = window.__opts || {};
+    const DBG = O.debug ? {} : null;
+    // ---- 1. masque d'encre (traits sombres fins), seuil à hystérésis ----
+    const src = cv.imread(off), gray = new cv.Mat(); cv.cvtColor(src, gray, cv.COLOR_RGBA2GRAY); src.delete();
+    if (cv.mean(gray)[0] < 110) cv.bitwise_not(gray, gray);           // plan en négatif (traits clairs sur fond sombre)
+    let k = Math.round(diag*0.0035) | 1; k = Math.max(11, Math.min(25, k)); if (O.k) k = O.k;
+    const polys = [];                                                     // zones pleines épaisses (murs pochés) : on trace leur contour
+    {
+      const dark = new cv.Mat(); cv.threshold(gray, dark, O.darkT || 110, 255, cv.THRESH_BINARY_INV);
+      const ko = cv.getStructuringElement(cv.MORPH_RECT, new cv.Size(k, k));
+      cv.morphologyEx(dark, dark, cv.MORPH_OPEN, ko); ko.delete();
+      if (cv.countNonZero(dark) > 4*k*k){
+        const cts = new cv.MatVector(), hier = new cv.Mat();
+        cv.findContours(dark, cts, hier, cv.RETR_LIST, cv.CHAIN_APPROX_SIMPLE);
+        for (let i=0;i<cts.size();i++){
+          const c = cts.get(i);
+          if (cv.contourArea(c) >= 4*k*k){
+            const ap = new cv.Mat(); cv.approxPolyDP(c, ap, 1.6, true);
+            const d = new Int32Array(ap.data32S), pts = []; for (let j=0;j<d.length;j+=2) pts.push([d[j], d[j+1]]);
+            if (pts.length >= 3) polys.push(pts); ap.delete();
+          }
+          c.delete();
+        }
+        cts.delete(); hier.delete();
+      }
+      dark.delete();
+    }
+    const ker = cv.getStructuringElement(cv.MORPH_RECT, new cv.Size(k, k));
+    const bh = new cv.Mat(); cv.morphologyEx(gray, bh, cv.MORPH_BLACKHAT, ker); ker.delete(); gray.delete();
+    if (!P.crisp) cv.GaussianBlur(bh, bh, new cv.Size(3,3), 0);
+    const tHigh = O.tHigh || (P.crisp ? 60 : Math.round(70 - P.sens*4));
+    const tLow = O.tLow || (P.crisp ? 30 : Math.max(10, Math.round(tHigh*0.47)));
+    const weak = new cv.Mat(); cv.threshold(bh, weak, tLow, 255, cv.THRESH_BINARY);
+    const lab = new cv.Mat(), stats = new cv.Mat(), cent = new cv.Mat();
+    const nLab = cv.connectedComponentsWithStats(weak, lab, stats, cent, 8);
+    const L = new Int32Array(lab.data32S), S = new Int32Array(stats.data32S); lab.delete();
+    const B = bh.data;
+    const strong = new Int32Array(nLab);
+    for (let i=0;i<L.length;i++){ const c = L[i]; if (c && B[i] > tHigh) strong[c]++; }
+    const keep = new Uint8Array(nLab);      // 1 = gardé, 2 = gardé mais « petit » (tiret, signe)
+    for (let c=1;c<nLab;c++){
+      const w = S[c*5+2], h = S[c*5+3], area = S[c*5+4], mx = Math.max(w,h);
+      if (area < 10) continue;
+      if (strong[c] < Math.max(4, Math.min(area*0.05, 30))) continue;
+      if (mx < P.minComp){
+        if (!(mx >= 6 && area <= mx*7)) continue;                    // petit et pas allongé : lettre, tache
+        keep[c] = 2;
+      } else keep[c] = 1;
+    }
+    const maskMat = new cv.Mat(H, W, cv.CV_8UC1); const M = maskMat.data;
+    for (let i=0;i<L.length;i++) M[i] = keep[L[i]] ? 1 : 0;
+    const k3 = cv.getStructuringElement(cv.MORPH_RECT, new cv.Size(3,3));
+    cv.morphologyEx(maskMat, maskMat, cv.MORPH_CLOSE, k3); k3.delete();
+    const img = new Uint8Array(maskMat.data); maskMat.delete();
+    for (let x=0;x<W;x++){ img[x]=0; img[W+x]=0; img[(H-1)*W+x]=0; img[(H-2)*W+x]=0; }
+    for (let y=0;y<H;y++){ img[y*W]=0; img[y*W+1]=0; img[y*W+W-1]=0; img[y*W+W-2]=0; }
+    let area = 0; for (let i=0;i<img.length;i++) area += img[i];
+    if (DBG) DBG.mask = new Uint8Array(img);
+    bh.delete(); weak.delete(); stats.delete(); cent.delete();
+
+    // ---- 2. squelette ----
+    const skel = skThin(img, W);
+    const strokeW = Math.max(1, Math.min(12, area / Math.max(1, skel.length)));
+    if (DBG){ DBG.skel = new Uint8Array(img); DBG.W = W; DBG.H = H; DBG.strokeW = strokeW; }
+
+    // ---- 3. graphe : nœuds (bouts, jonctions) et chemins ----
+    const nb = [-W-1,-W,-W+1,-1,1,W-1,W,W+1];
+    const isNode = new Uint8Array(W*H);
+    for (let q=0;q<skel.length;q++){
+      const i = skel[q];
+      const d = img[i-W-1]+img[i-W]+img[i-W+1]+img[i-1]+img[i+1]+img[i+W-1]+img[i+W]+img[i+W+1];
+      if (d === 1) isNode[i] = 1; else if (d >= 3) isNode[i] = 2; else if (d === 0) isNode[i] = 3;
+    }
+    const nodeOf = new Map(), nodes = [];
+    for (let q=0;q<skel.length;q++){
+      const i = skel[q];
+      if (isNode[i] === 2 && !nodeOf.has(i)){
+        const id = nodes.length; let sx=0, sy=0, n=0; const st=[i], px=[]; nodeOf.set(i, id);
+        while (st.length){ const p = st.pop(); px.push(p); sx += p%W; sy += (p/W|0); n++;
+          for (let o=0;o<8;o++){ const r = p+nb[o]; if (isNode[r] === 2 && !nodeOf.has(r)){ nodeOf.set(r, id); st.push(r); } } }
+        nodes.push({ x:sx/n, y:sy/n, e:[], px });
+      } else if (isNode[i] === 1){ nodeOf.set(i, nodes.length); nodes.push({ x:i%W, y:(i/W|0), e:[], px:[i] }); }
+    }
+    const visited = new Uint8Array(W*H), edges = [];
+    const smallOf = i => keep[L[i]] === 2;
+    const walk = (from, first) => {
+      const pts = [first]; visited[first] = 1; let prev = from, cur = first;
+      for (;;){
+        let next = -1, hit = -1;
+        for (let o=0;o<8;o++){ const r = cur+nb[o]; if (r === prev || !img[r]) continue;
+          if (isNode[r] === 1 || isNode[r] === 2){ if (hit < 0) hit = r; } else if (!visited[r] && isNode[r] !== 3) next = r; }
+        if (hit >= 0 && pts.length > 1){ return { pts, end: nodeOf.get(hit) }; }
+        if (next >= 0){ visited[next] = 1; pts.push(next); prev = cur; cur = next; continue; }
+        if (hit >= 0) return { pts, end: nodeOf.get(hit) };
+        // cul-de-sac inattendu : on crée un bout
+        const id = nodes.length; nodes.push({ x:cur%W, y:(cur/W|0), e:[], px:[cur] }); return { pts, end:id };
+      }
+    };
+    const addEdge = (a, b, pts) => {
+      if (a === b && pts.length < Math.max(8, 4*strokeW)) return;      // mini-boucle (trou dans un trait)
+      const Pf = new Float32Array((pts.length+2)*2);
+      for (let i=0;i<pts.length;i++){ Pf[2*i+2] = pts[i]%W; Pf[2*i+3] = (pts[i]/W|0); }
+      let sm = true; for (let i=0;i<pts.length && sm;i+=4) if (!smallOf(pts[i])) sm = false;
+      const id = edges.length; edges.push({ a, b, P:Pf, alive:true, small:sm });
+      nodes[a].e.push(id); nodes[b].e.push(id);
+    };
+    const nNodes0 = nodes.length;
+    for (let id=0; id<nNodes0; id++){
+      const nd = nodes[id];
+      for (const p of nd.px) for (let o=0;o<8;o++){
+        const r = p+nb[o]; if (!img[r] || isNode[r] || visited[r]) continue;
+        const w = walk(p, r); addEdge(id, w.end, w.pts);
+      }
+    }
+    for (let q=0;q<skel.length;q++){                                   // boucles fermées sans nœud
+      const i = skel[q]; if (isNode[i] || visited[i]) continue;
+      const id = nodes.length; nodes.push({ x:i%W, y:(i/W|0), e:[], px:[i] }); nodeOf.set(i, id); isNode[i] = 2; visited[i] = 1;
+      for (let o=0;o<8;o++){ const r = i+nb[o]; if (img[r] && !isNode[r] && !visited[r]){ const w = walk(i, r); addEdge(id, w.end, w.pts); break; } }
+    }
+
+    // ---- 4. nettoyage du graphe : barbules, ponts de croisement, nœuds de passage ----
+    const deg = n => { let d = 0; for (const e of n.e) if (edges[e].alive) d += (edges[e].a === edges[e].b ? 2 : 1); return d; };
+    const elen = e => e.P.length/2 - 2;
+    const spurLen = Math.max(5, 2.2*strokeW), bridgeLen = Math.max(4, 1.7*strokeW);
+    const orient = (e, startNode) => {                                   // renvoie les points du chemin en partant de startNode
+      if (e.a === startNode) return e.P;
+      const n = e.P.length/2, R = new Float32Array(e.P.length);
+      for (let i=0;i<n;i++){ R[2*i] = e.P[2*(n-1-i)]; R[2*i+1] = e.P[2*(n-1-i)+1]; }
+      return R;
+    };
+    for (let round=0; round<3; round++){
+      let changed = false;
+      for (const e of edges){                                            // barbules
+        if (!e.alive || e.a === e.b) continue;
+        const da = deg(nodes[e.a]), db = deg(nodes[e.b]);
+        if (((da === 1 && db >= 3) || (db === 1 && da >= 3)) && elen(e) < spurLen){ e.alive = false; changed = true; }
+      }
+      for (const e of edges){                                            // pont entre deux jonctions (croisement en X)
+        if (!e.alive || e.a === e.b) continue;
+        if (deg(nodes[e.a]) >= 3 && deg(nodes[e.b]) >= 3 && elen(e) < bridgeLen){
+          const A = nodes[e.a], Bn = nodes[e.b]; e.alive = false;
+          A.x = (A.x+Bn.x)/2; A.y = (A.y+Bn.y)/2;
+          for (const id of Bn.e){ const f = edges[id]; if (!f.alive) continue; if (f.a === e.b) f.a = e.a; if (f.b === e.b) f.b = e.a; A.e.push(id); }
+          Bn.e = []; changed = true;
+        }
+      }
+      for (let id=0; id<nodes.length; id++){                             // nœud de degré 2 : on recolle les deux chemins
+        const nd = nodes[id]; const al = nd.e.filter(x => edges[x].alive);
+        if (al.length !== 2 || al[0] === al[1]) continue;
+        const e1 = edges[al[0]], e2 = edges[al[1]]; if (e1.a === e1.b || e2.a === e2.b) continue;
+        const o1 = e1.a === id ? e1.b : e1.a, o2 = e2.a === id ? e2.b : e2.a;
+        const P1 = orient(e1, o1), P2 = orient(e2, id);                   // P1 finit sur le nœud, P2 en part
+        const n1 = P1.length/2, n2 = P2.length/2, Pn = new Float32Array((n1+n2-1)*2);
+        Pn.set(P1.subarray(0, (n1-1)*2), 0); Pn[(n1-1)*2] = nd.x; Pn[(n1-1)*2+1] = nd.y; Pn.set(P2.subarray(2), n1*2);
+        e1.alive = false; e2.alive = false;
+        const ne = edges.length; edges.push({ a:o1, b:o2, P:Pn, alive:true, small: e1.small && e2.small });
+        nodes[o1].e.push(ne); nodes[o2].e.push(ne); nd.e = []; changed = true;
+      }
+      if (!changed) break;
+    }
+
+    // ---- 5. simplification (Douglas-Peucker) → segments de base ----
+    const eps = Math.max(1.4, 0.45*strokeW);
+    const V = nodes.map(n => [n.x, n.y]);                                 // sommets : d'abord les nœuds
+    const base = [];                                                      // {va, vb, P, i0, i1, small}
+    const dpRun = (Pf, a0, b0, out) => {
+      const st = [[a0, b0]];
+      while (st.length){
+        const [a, b] = st.pop(); if (b <= a+1) continue;
+        const ax = Pf[2*a], ay = Pf[2*a+1], dx = Pf[2*b]-ax, dy = Pf[2*b+1]-ay, Ld = Math.hypot(dx, dy);
+        let md = -1, mi = -1;
+        for (let i=a+1;i<b;i++){
+          const d = Ld < 1 ? Math.hypot(Pf[2*i]-ax, Pf[2*i+1]-ay) : Math.abs((Pf[2*i]-ax)*dy - (Pf[2*i+1]-ay)*dx)/Ld;
+          if (d > md){ md = d; mi = i; }
+        }
+        if (md > eps){ out.push(mi); st.push([a, mi], [mi, b]); }
+      }
+    };
+    for (const e of edges){
+      if (!e.alive) continue;
+      const Pf = e.P, n = Pf.length/2;
+      Pf[0] = nodes[e.a].x; Pf[1] = nodes[e.a].y; Pf[2*n-2] = nodes[e.b].x; Pf[2*n-1] = nodes[e.b].y;
+      const cut = [];
+      dpRun(Pf, 0, n-1, cut);
+      cut.sort((p, q) => p-q);
+      const idx = [0].concat(cut, [n-1]);
+      let pv = e.a;
+      for (let s=0; s<idx.length-1; s++){
+        let nv;
+        if (s === idx.length-2) nv = e.b; else { nv = V.length; V.push([Pf[2*idx[s+1]], Pf[2*idx[s+1]+1]]); }
+        if (pv !== nv) base.push({ va:pv, vb:nv, P:Pf, i0:idx[s], i1:idx[s+1], small:e.small });
+        pv = nv;
+      }
+    }
+
+    // ---- 6. lignes droites qui traversent les jonctions ----
+    const inc = new Map();                                                // sommet → segments de base
+    base.forEach((s, i) => { for (const v of [s.va, s.vb]){ if (!inc.has(v)) inc.set(v, []); inc.get(v).push(i); } });
+    const linkA = new Int32Array(base.length).fill(-1), linkB = new Int32Array(base.length).fill(-1);
+    const cosLink = Math.cos(9*Math.PI/180), cosInner = Math.cos(2.5*Math.PI/180);
+    for (const [v, list] of inc){
+      const inner = v >= nodes.length;
+      if (inner ? list.length !== 2 : list.length < 3) continue;
+      const dirs = list.map(i => { const s = base[i], o = V[s.va === v ? s.vb : s.va]; const dx = o[0]-V[v][0], dy = o[1]-V[v][1], l = Math.hypot(dx,dy)||1; return [dx/l, dy/l, l]; });
+      const cand = [];
+      for (let p=0;p<list.length;p++) for (let q=p+1;q<list.length;q++){
+        const c = -(dirs[p][0]*dirs[q][0] + dirs[p][1]*dirs[q][1]);
+        if (c > (inner ? cosInner : cosLink)) cand.push([c, p, q]);
+      }
+      cand.sort((a, b) => b[0]-a[0]);
+      const used = new Set();
+      for (const [, p, q] of cand){
+        if (used.has(p) || used.has(q)) continue; used.add(p); used.add(q);
+        const sp = list[p], sq = list[q];
+        if (base[sp].va === v) linkA[sp] = sq; else linkB[sp] = sq;
+        if (base[sq].va === v) linkA[sq] = sp; else linkB[sq] = sp;
+      }
+    }
+    const tolS = Math.max(1.8, 0.6*strokeW);
+    const runs = [];
+    const makeRun = chain => {                                            // chain : [{s, rev}]
+      let sx=0, sy=0, sxx=0, syy=0, sxy=0, n=0, small = true; const thr = [];
+      chain.forEach((c, ci) => {
+        const s = base[c.s]; if (!s.small) small = false;
+        for (let i=s.i0;i<=s.i1;i++){ const x = s.P[2*i], y = s.P[2*i+1]; sx+=x; sy+=y; sxx+=x*x; syy+=y*y; sxy+=x*y; n++; }
+        if (ci > 0) thr.push(c.rev ? s.vb : s.va);
+      });
+      const f = chain[0], l = chain[chain.length-1];
+      const va = f.rev ? base[f.s].vb : base[f.s].va, vb = l.rev ? base[l.s].va : base[l.s].vb;
+      const A = V[va], Bp = V[vb];
+      let cx = (A[0]+Bp[0])/2, cy = (A[1]+Bp[1])/2, ux = Bp[0]-A[0], uy = Bp[1]-A[1];
+      const cl = Math.hypot(ux, uy) || 1; ux /= cl; uy /= cl;
+      if (n >= 6 && cl >= 6){
+        const mx = sx/n, my = sy/n, cxx = sxx/n-mx*mx, cyy = syy/n-my*my, cxy = sxy/n-mx*my;
+        const th = 0.5*Math.atan2(2*cxy, cxx-cyy); let px = Math.cos(th), py = Math.sin(th);
+        if (px*ux+py*uy < 0){ px = -px; py = -py; }
+        if (px*ux+py*uy > 0.99){ ux = px; uy = py; cx = mx; cy = my; }
+      }
+      const t1 = (A[0]-cx)*ux+(A[1]-cy)*uy, t2 = (Bp[0]-cx)*ux+(Bp[1]-cy)*uy;
+      runs.push({ x1:cx+ux*t1, y1:cy+uy*t1, x2:cx+ux*t2, y2:cy+uy*t2, va, vb, thr, small, alive:true, parts:1 });
+    };
+    const emit = chain => {
+      if (chain.length === 1){ makeRun(chain); return; }
+      const vs = [chain[0].rev ? base[chain[0].s].vb : base[chain[0].s].va];
+      for (const c of chain) vs.push(c.rev ? base[c.s].va : base[c.s].vb);
+      const A = V[vs[0]], Bp = V[vs[vs.length-1]], dx = Bp[0]-A[0], dy = Bp[1]-A[1], Ld = Math.hypot(dx, dy);
+      let md = -1, mi = -1;
+      for (let i=1;i<vs.length-1;i++){ const p = V[vs[i]]; const d = Ld < 1 ? Math.hypot(p[0]-A[0], p[1]-A[1]) : Math.abs((p[0]-A[0])*dy-(p[1]-A[1])*dx)/Ld; if (d > md){ md = d; mi = i; } }
+      if (md <= tolS + 0.0022*Ld){ makeRun(chain); return; }
+      emit(chain.slice(0, mi)); emit(chain.slice(mi));
+    };
+    const done = new Uint8Array(base.length);
+    const follow = (s0) => {
+      // remonte jusqu'à un bout de chaîne puis déroule
+      let s = s0, rev = false, guard = 0;
+      for (;;){ const prev = rev ? linkB[s] : linkA[s]; if (prev < 0 || prev === s0 || guard++ > base.length) break;
+        const v = rev ? base[s].vb : base[s].va; rev = !(base[prev].vb === v); s = prev; }
+      const chain = []; guard = 0;
+      for (;;){ if (done[s]) break; done[s] = 1; chain.push({ s, rev });
+        const next = rev ? linkA[s] : linkB[s]; if (next < 0 || guard++ > base.length) break;
+        const v = rev ? base[s].va : base[s].vb; rev = !(base[next].va === v); s = next; }
+      if (chain.length) emit(chain);
+    };
+    for (let i=0;i<base.length;i++) if (!done[i]) follow(i);
+
+    for (const pts of polys){
+      const ids = pts.map(q => { V.push([q[0], q[1]]); return V.length-1; });
+      for (let i=0;i<pts.length;i++){
+        const a = pts[i], b = pts[(i+1)%pts.length];
+        runs.push({ x1:a[0], y1:a[1], x2:b[0], y2:b[1], va:ids[i], vb:ids[(i+1)%pts.length], thr:[], small:false, alive:true, parts:1 });
+      }
+    }
+
+    // ---- 7. grille d'angles de la page, redressement prudent ----
+    const prep = r => { const dx = r.x2-r.x1, dy = r.y2-r.y1; r.len = Math.hypot(dx, dy) || 1e-6; r.ux = dx/r.len; r.uy = dy/r.len; };
+    runs.forEach(prep);
+    let theta0 = 0;
+    {
+      const bins = new Float64Array(101); let tot = 0;
+      for (const r of runs){ if (r.len < diag*0.02) continue;
+        const a = Math.atan2(r.uy, r.ux)*180/Math.PI, d = (((a+45)%90)+90)%90 - 45;
+        if (Math.abs(d) > 5) continue; bins[Math.round((d+5)*10)] += r.len; tot += r.len; }
+      if (tot > 0){ let best = 50, bv = -1;
+        for (let i=0;i<101;i++){ let v = 0; for (let j=Math.max(0,i-2); j<=Math.min(100,i+2); j++) v += bins[j]; if (v > bv){ bv = v; best = i; } }
+        // affine : moyenne pondérée autour du pic
+        let sw = 0, sv = 0; for (let j=Math.max(0,best-3); j<=Math.min(100,best+3); j++){ sw += bins[j]; sv += bins[j]*(j/10-5); }
+        theta0 = sw > 0 ? sv/sw : 0; if (Math.abs(theta0) < 0.12) theta0 = 0; }
+    }
+    const snapTol = Math.max(1.6, 0.5*strokeW), step = 15;
+    for (const r of runs){
+      const a = Math.atan2(r.uy, r.ux)*180/Math.PI;
+      const tgt = theta0 + Math.round((a-theta0)/step)*step, dth = (tgt-a)*Math.PI/180;
+      if (Math.abs(dth) < 1e-9 || Math.abs(dth) > 3.2*Math.PI/180) continue;
+      if ((r.len/2)*Math.abs(Math.sin(dth)) > snapTol) continue;
+      const mx = (r.x1+r.x2)/2, my = (r.y1+r.y2)/2, c = Math.cos(tgt*Math.PI/180), s = Math.sin(tgt*Math.PI/180), h = r.len/2;
+      r.x1 = mx-c*h; r.y1 = my-s*h; r.x2 = mx+c*h; r.y2 = my+s*h; prep(r);
+    }
+
+    // ---- 8. fusion des morceaux alignés (traits interrompus, tirets, croisements) ----
+    runs.sort((a, b) => b.len-a.len);
+    const offTol = Math.max(1.6, 0.55*strokeW), gapMax = Math.max(8, diag*0.006);
+    const cosLong = Math.cos(1.2*Math.PI/180), cosShort = Math.cos(4*Math.PI/180);
+    for (let pass=0; pass<4; pass++){
+      let changed = false;
+      for (let i=0;i<runs.length;i++){
+        const a = runs[i]; if (!a.alive) continue;
+        for (let j=i+1;j<runs.length;j++){
+          const b = runs[j]; if (!b.alive) continue;
+          const c = Math.abs(a.ux*b.ux + a.uy*b.uy);
+          if (c < (b.len < 30 ? cosShort : cosLong)) continue;
+          const d1 = (b.x1-a.x1)*(-a.uy)+(b.y1-a.y1)*a.ux; if (d1 > offTol || d1 < -offTol) continue;
+          const d2 = (b.x2-a.x1)*(-a.uy)+(b.y2-a.y1)*a.ux; if (d2 > offTol || d2 < -offTol) continue;
+          const t1 = (b.x1-a.x1)*a.ux+(b.y1-a.y1)*a.uy, t2 = (b.x2-a.x1)*a.ux+(b.y2-a.y1)*a.uy;
+          const lo = Math.min(t1, t2), hi = Math.max(t1, t2);
+          const gap = lo > a.len ? lo-a.len : (hi < 0 ? -hi : 0);
+          if (gap > gapMax) continue;
+          const ends = [[0, a.va], [a.len, a.vb], [t1, b.va], [t2, b.vb]].sort((p, q) => p[0]-q[0]);
+          const mn = ends[0][0], mx = ends[3][0], ox = a.x1, oy = a.y1;
+          a.thr.push(ends[1][1], ends[2][1]); for (const v of b.thr) a.thr.push(v);
+          a.va = ends[0][1]; a.vb = ends[3][1];
+          a.x1 = ox+a.ux*mn; a.y1 = oy+a.uy*mn; a.x2 = ox+a.ux*mx; a.y2 = oy+a.uy*mx; a.len = mx-mn;
+          a.small = a.small && b.small; a.parts += b.parts; b.alive = false; changed = true;
+        }
+      }
+      if (!changed) break;
+    }
+
+    // ---- 8 bis. lignes en tirets : au moins 3 petits traits alignés et régulièrement espacés = une seule ligne ----
+    {
+      const dashMax = diag*0.025, cand = runs.filter(r => r.alive && r.len <= dashMax && r.len >= 4);
+      const par = cand.map((_, i) => i); const find = i => { while (par[i] !== i){ par[i] = par[par[i]]; i = par[i]; } return i; };
+      const cosD = Math.cos(3*Math.PI/180);
+      for (let i=0;i<cand.length;i++){
+        const a = cand[i];
+        for (let j=i+1;j<cand.length;j++){
+          const b = cand[j];
+          if (Math.abs(a.ux*b.ux+a.uy*b.uy) < cosD) continue;
+          const lmax = Math.max(a.len, b.len), lmin = Math.min(a.len, b.len); if (lmax > 3*lmin) continue;
+          const mx = (b.x1+b.x2)/2 - a.x1, my = (b.y1+b.y2)/2 - a.y1;
+          if (Math.abs(mx*(-a.uy)+my*a.ux) > offTol+1) continue;
+          const t1 = (b.x1-a.x1)*a.ux+(b.y1-a.y1)*a.uy, t2 = (b.x2-a.x1)*a.ux+(b.y2-a.y1)*a.uy, lo = Math.min(t1,t2), hi = Math.max(t1,t2);
+          const gap = lo > a.len ? lo-a.len : (hi < 0 ? -hi : 0);
+          if (gap <= 0 || gap > Math.min(3*lmax, diag*0.03)) continue;
+          par[find(i)] = find(j);
+        }
+      }
+      const groups = new Map(); cand.forEach((r, i) => { const g = find(i); if (!groups.has(g)) groups.set(g, []); groups.get(g).push(r); });
+      for (const g of groups.values()){
+        if (g.length < 3) continue;
+        // droite ajustée sur les milieux et les bouts
+        let sx=0, sy=0, n=0; const P2 = []; for (const r of g){ P2.push([r.x1,r.y1],[r.x2,r.y2]); }
+        for (const q of P2){ sx+=q[0]; sy+=q[1]; n++; } const cx = sx/n, cy = sy/n;
+        let cxx=0, cyy=0, cxy=0; for (const q of P2){ cxx+=(q[0]-cx)**2; cyy+=(q[1]-cy)**2; cxy+=(q[0]-cx)*(q[1]-cy); }
+        const th = 0.5*Math.atan2(2*cxy, cxx-cyy), ux = Math.cos(th), uy = Math.sin(th);
+        let lo = Infinity, hi = -Infinity, vlo = -1, vhi = -1, dev = 0;
+        for (const r of g) for (const [x, y, v] of [[r.x1,r.y1,r.va],[r.x2,r.y2,r.vb]]){
+          const t = (x-cx)*ux+(y-cy)*uy; dev = Math.max(dev, Math.abs((x-cx)*(-uy)+(y-cy)*ux));
+          if (t < lo){ lo = t; vlo = v; } if (t > hi){ hi = t; vhi = v; } }
+        if (dev > offTol+1.5) continue;
+        const keepR = g[0]; for (let i=1;i<g.length;i++){ g[i].alive = false; keepR.thr.push(g[i].va, g[i].vb); }
+        keepR.thr.push(keepR.va, keepR.vb); keepR.va = vlo; keepR.vb = vhi;
+        keepR.x1 = cx+ux*lo; keepR.y1 = cy+uy*lo; keepR.x2 = cx+ux*hi; keepR.y2 = cy+uy*hi; keepR.small = false; keepR.parts = g.length; prep(keepR);
+      }
+    }
+
+    // ---- 9. coins nets et raccords exacts aux jonctions ----
+    const joinTol = Math.max(4, 2.6*strokeW), sinMin = Math.sin(12*Math.PI/180);
+    const cross = (r, q) => { const den = r.ux*q.uy - r.uy*q.ux; if (Math.abs(den) < sinMin) return null;
+      const t = ((q.x1-r.x1)*q.uy - (q.y1-r.y1)*q.ux)/den; return [r.x1+r.ux*t, r.y1+r.uy*t]; };
+    const at = new Map();
+    const slot = v => { if (!at.has(v)) at.set(v, { ends:[], thr:[] }); return at.get(v); };
+    for (const r of runs){ if (!r.alive) continue; if (r.va !== r.vb){ slot(r.va).ends.push([r, 1]); slot(r.vb).ends.push([r, 2]); } for (const v of r.thr) if (v !== r.va && v !== r.vb) slot(v).thr.push(r); }
+    const endPt = (r, w) => w === 1 ? [r.x1, r.y1] : [r.x2, r.y2];
+    const setEnd = (r, w, p) => { if (w === 1){ r.x1 = p[0]; r.y1 = p[1]; } else { r.x2 = p[0]; r.y2 = p[1]; } };
+    const moved = new Set();
+    for (const [, s] of at){
+      if (s.thr.length){
+        const bs = s.thr.reduce((p, q) => q.len > p.len ? q : p);
+        for (const [r, w] of s.ends){ if (r === bs) continue; const X = cross(r, bs), e = endPt(r, w);
+          if (X && Math.hypot(X[0]-e[0], X[1]-e[1]) <= joinTol){ setEnd(r, w, X); moved.add(r); } }
+      } else if (s.ends.length >= 2){
+        const es = s.ends.slice().sort((p, q) => q[0].len-p[0].len);
+        let X = null, pi = -1, qi = -1;
+        for (let p=0;p<es.length && !X;p++) for (let q=p+1;q<es.length && !X;q++){ const c = cross(es[p][0], es[q][0]);
+          if (c){ const e1 = endPt(es[p][0], es[p][1]), e2 = endPt(es[q][0], es[q][1]);
+            if (Math.hypot(c[0]-e1[0], c[1]-e1[1]) <= joinTol && Math.hypot(c[0]-e2[0], c[1]-e2[1]) <= joinTol){ X = c; pi = p; qi = q; } } }
+        if (!X){ let sx = 0, sy = 0; for (const [r, w] of es){ const e = endPt(r, w); sx += e[0]; sy += e[1]; } X = [sx/es.length, sy/es.length]; }
+        for (const [r, w] of es){ const e = endPt(r, w); if (Math.hypot(X[0]-e[0], X[1]-e[1]) <= joinTol){ setEnd(r, w, X); moved.add(r); } }
+      }
+    }
+    for (const r of moved) prep(r);
+    {
+      const reach = O.reach !== undefined ? O.reach : Math.max(6, 3*strokeW, diag*0.003);
+      const live = runs.filter(r => r.alive);
+      const cellS = 64, grid = new Map();
+      const put = (r) => { const x0 = Math.floor((Math.min(r.x1,r.x2)-reach)/cellS), x1 = Math.floor((Math.max(r.x1,r.x2)+reach)/cellS), y0 = Math.floor((Math.min(r.y1,r.y2)-reach)/cellS), y1 = Math.floor((Math.max(r.y1,r.y2)+reach)/cellS);
+        if ((x1-x0+1)*(y1-y0+1) > 4000) { r.big = true; return; }
+        for (let gx=x0; gx<=x1; gx++) for (let gy=y0; gy<=y1; gy++){ const key = gx*100003+gy; if (!grid.has(key)) grid.set(key, []); grid.get(key).push(r); } };
+      live.forEach(put);
+      const bigs = live.filter(r => r.big);
+      const loose = (v) => { const s = at.get(v); return !s || (s.ends.length + s.thr.length) <= 1; };
+      const fixes = [];
+      for (const r of live){
+        if (r.len < 4) continue;
+        for (const w of [1, 2]){
+          const v = w === 1 ? r.va : r.vb; if (!loose(v)) continue;
+          const e = endPt(r, w), dx = w === 1 ? -r.ux : r.ux, dy = w === 1 ? -r.uy : r.uy;
+          const cand = (grid.get(Math.floor(e[0]/cellS)*100003+Math.floor(e[1]/cellS)) || []).concat(bigs);
+          let bestT = reach, bestX = null;
+          for (const q of cand){
+            if (q === r) continue;
+            const den = dx*q.uy - dy*q.ux; if (Math.abs(den) < 0.2) continue;
+            const t = ((q.x1-e[0])*q.uy - (q.y1-e[1])*q.ux)/den;             // distance le long de r
+            if (t < -reach*0.5 || t > reach) continue;
+            const X = [e[0]+dx*t, e[1]+dy*t], u = (X[0]-q.x1)*q.ux + (X[1]-q.y1)*q.uy;
+            if (u < -1.5 || u > q.len+1.5) continue;
+            if (bestX === null || Math.abs(t) < Math.abs(bestT)){ bestT = t; bestX = X; }
+          }
+          if (bestX && Math.abs(bestT) > 1e-6) fixes.push([r, w, bestX]);
+        }
+      }
+      for (const [r, w, X] of fixes){ setEnd(r, w, X); prep(r); r.joined = (r.joined||0) | w; }
+    }
+
+    // ---- 10. tri final ----
+    const connected = new Map();
+    for (const [v, s] of at) connected.set(v, s.ends.length + s.thr.length);
+    const minConn = Math.max(5, 2*strokeW);
+    let out = [];
+    for (const r of runs){
+      if (!r.alive) continue;
+      if (r.small && r.parts < 2 && r.len < P.minComp) continue;          // signe isolé (chiffre, tiret seul)
+      const both = ((connected.get(r.va) || 0) >= 2 || (r.joined & 1)) && ((connected.get(r.vb) || 0) >= 2 || (r.joined & 2));
+      if (r.len < P.minLen && !(both && r.len >= minConn)) continue;
+      out.push(r);
+    }
+    {                                                                     // essaims de petits traits en tous sens = texte
+      const cell = diag*0.025, grid = new Map();
+      const info = out.map((r, i) => { let a = Math.atan2(r.uy, r.ux)*180/Math.PI - theta0; a = ((a%180)+180)%180;
+        return { i, k: Math.floor((r.x1+r.x2)/2/cell)+'_'+Math.floor((r.y1+r.y2)/2/cell), cx: Math.floor((r.x1+r.x2)/2/cell), cy: Math.floor((r.y1+r.y2)/2/cell), short: r.len < cell*1.6, off: Math.min(a%90, 90-(a%90)) > 12 }; });
+      for (const o of info){ if (!grid.has(o.k)) grid.set(o.k, []); grid.get(o.k).push(o); }
+      out = out.filter((r, i) => { const o = info[i]; if (!o.short) return true;
+        let n = 0, offN = 0;
+        for (let gx=o.cx-1; gx<=o.cx+1; gx++) for (let gy=o.cy-1; gy<=o.cy+1; gy++){ const b = grid.get(gx+'_'+gy); if (!b) continue; for (const q of b) if (q.short){ n++; if (q.off) offN++; } }
+        return !(n >= 22 && offN/n > 0.45); });
+    }
+    if (DBG){ DBG.theta0 = theta0; DBG.nodes = nodes.length; DBG.base = base.length; window.__skLast = DBG; }
+    return { items: out.map(r => ({ points: [[r.x1, r.y1], [r.x2, r.y2]], len: r.len, passCount: 3 })), raw: base.length, theta0, strokeW };
+  }
+
   async function runDetection(){
     if (!state.img){ window.vpToast('Charge d\'abord un plan (bouton « Choisir un plan »).', true); return; }
     const btn = document.getElementById('btnDetect');
@@ -1608,23 +2110,35 @@
       off.getContext('2d').drawImage(state.img, zx, zy, cw, ch, 0, 0, cw, ch);
       const diag = Math.hypot(cw, ch);
 
-      const passSensitivities = deep ? [Math.max(1,sens-2), sens, Math.min(10,sens+2)] : [sens];
-      let tagged = [];
-      let rawTotal = 0;
-      for (let p=0; p<passSensitivities.length; p++){
-        statusEl.textContent = deep ? ('Analyse — passe ' + (p+1) + '/' + passSensitivities.length + '…') : 'Analyse en cours…';
-        await new Promise(r => setTimeout(r, 20));
-        const raw = houghPass(off, passSensitivities[p], lenFrac, diag, crisp);
-        rawTotal += raw.length;
-        for (const seg of raw) tagged.push({ seg, pass: p });
-      }
-
       const finalMinLen = diag*lenFrac*0.6;
-      const minPassCount = deep ? 2 : 1;
       const fuse = parseInt(document.getElementById('rngDetFuse').value);
-      let merged = mergeColinearSegments(tagged, diag).filter(m => m.len >= finalMinLen);
-      merged = dedupeSegments(merged, diag, 0.0008 + fuse*0.0009)
-        .filter(m => m.len >= finalMinLen && m.passCount >= minPassCount);
+      let merged = null, rawTotal = 0;
+      const wantEdges = state.detEngine === 'bords' || !!(window.__opts && window.__opts.legacy);
+      if (!wantEdges){
+        try {
+          statusEl.textContent = 'Analyse des traits…';
+          await new Promise(r => setTimeout(r, 20));
+          const res = skeletonDetect(off, { diag, sens, crisp, minLen: finalMinLen, minComp: diag*(0.009 + 0.003*lenSlider) });
+          merged = res.items; rawTotal = res.raw;
+          if (fuse > 1) merged = dedupeSegments(merged, diag, (fuse-1)*0.00035).filter(m => m.len >= finalMinLen);
+        } catch(e){ console.error(e); window.__skErr = String(e && e.stack || e); merged = null; }
+      }
+      if (!merged){
+        const passSensitivities = deep ? [Math.max(1,sens-2), sens, Math.min(10,sens+2)] : [sens];
+        let tagged = [];
+        for (let p=0; p<passSensitivities.length; p++){
+          statusEl.textContent = deep ? ('Analyse — passe ' + (p+1) + '/' + passSensitivities.length + '…') : 'Analyse en cours…';
+          await new Promise(r => setTimeout(r, 20));
+          const raw = houghPass(off, passSensitivities[p], lenFrac, diag, crisp);
+          rawTotal += raw.length;
+          for (const seg of raw) tagged.push({ seg, pass: p });
+        }
+
+        const minPassCount = deep ? 2 : 1;
+        merged = mergeColinearSegments(tagged, diag).filter(m => m.len >= finalMinLen);
+        merged = dedupeSegments(merged, diag, 0.0008 + fuse*0.0009)
+          .filter(m => m.len >= finalMinLen && m.passCount >= minPassCount);
+      }
       if (document.getElementById('chkHatch').checked) merged = removeHatching(merged, diag);
       if (document.getElementById('chkExtend').checked) merged = extendSegments(merged, diag);
 
@@ -1636,7 +2150,7 @@
       snapshot();
       state.currentCluster = 0;
       const zoneNote = state.detectionZone ? ' (zone définie)' : '';
-      statusEl.innerHTML = state.suggestions.length + ' segments suggérés (sur ' + rawTotal + ' détectés bruts' + (deep?', '+passSensitivities.length+' passes':'') + ')' + zoneNote + ', ' +
+      statusEl.innerHTML = state.suggestions.length + ' segments suggérés (sur ' + rawTotal + ' détectés bruts)' + zoneNote + ', ' +
         '<span style="color:#ff9100">' + looseCount + ' bouts non reliés</span> (ronds orange), ' +
         clusterCount + ' groupes connectés. ' +
         'Clique une ligne cyan pour l\'effacer, ou active la revue par groupe ci-dessous.';
@@ -3429,8 +3943,9 @@
   // presets
   const PRESETS = {
     net:      { sens:10, len:1, fuse:1, hatch:false, ext:false },
-    abime:    { sens:7,  len:4, fuse:4, hatch:false, ext:false },
-    hachures: { sens:10, len:2, fuse:2, hatch:true,  ext:false }
+    abime:    { sens:7,  len:3, fuse:2, hatch:false, ext:false },
+    hachures: { sens:10, len:1, fuse:1, hatch:true,  ext:false },
+    photo:    { sens:6,  len:4, fuse:4, hatch:false, ext:false, engine:'bords' }
   };
   function applyPreset(name){
     const P = PRESETS[name]; if (!P) return;
@@ -3438,6 +3953,7 @@
     setR('rngDetSens', P.sens); setR('rngDetLen', P.len); setR('rngDetFuse', P.fuse);
     document.getElementById('chkHatch').checked = P.hatch;
     document.getElementById('chkExtend').checked = P.ext;
+    state.detEngine = P.engine || 'traits';
     document.querySelectorAll('#presets button').forEach(b => b.classList.toggle('active', b.dataset.preset === name));
   }
   document.querySelectorAll('#presets button').forEach(b => b.addEventListener('click', () => applyPreset(b.dataset.preset)));
@@ -3791,7 +4307,7 @@
   // guided tour
   const TOUR = [
     { sel: 'header .file-btn', t: '1 · Charge ton plan', p: "Clique ici (ou glisse ton fichier sur la page) : PDF, JPG ou PNG. Pour un PDF de plusieurs pages, on te demande laquelle ouvrir." },
-    { sel: '#sidebar .side-section', t: '2 · Détection automatique', p: "Choisis le type de plan (net, abîmé, avec hachures), puis « Lancer la détection ». Les traits trouvés apparaissent en bleu." },
+    { sel: '#sidebar .side-section', t: '2 · Détection automatique', p: "Choisis le type de plan (net, abîmé, avec hachures, ou photo), puis « Lancer la détection ». Les traits trouvés apparaissent en bleu." },
     { sel: '#btnDetect', t: 'Lancer la détection', p: "C'est le gros bouton qui fait le travail. Tu peux d'abord « Choisir une zone » pour n'analyser qu'une partie du plan." },
     { sel: '#toolbar', t: '3 · Corriger', p: "Sélectionner, tracer une ligne, une courbe, relier deux points, effacer à la gomme… Les touches S, L, C, J, E sont des raccourcis." },
     { sel: '#btnCalib', t: 'Mettre à l\'échelle', p: "Clique deux points dont tu connais la distance réelle : l'export DXF sortira en mètres, à la bonne taille." },
