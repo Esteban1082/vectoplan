@@ -4183,7 +4183,7 @@
     if (state.mirror.live) toast('Miroir en direct actif : ce que tu traces est reflété de l\'autre côté.');
     updateMirrorUI(); render();
   });
-  function pickPoint(raw, from){
+  function mirrorPickPoint(raw, from){
     let q = snapPointOnly(raw);
     if (from && state.snapAngle && q === raw){ const dx = q[0]-from[0], dy = q[1]-from[1], d = Math.hypot(dx,dy), st = Math.PI/12; if (d > 1e-6){ const a = Math.round(Math.atan2(dy,dx)/st)*st; q = [from[0]+Math.cos(a)*d, from[1]+Math.sin(a)*d]; } }
     return q;
@@ -4193,7 +4193,7 @@
     const pk = state.mirror.pick; if (!pk || e.button !== 0) return;
     e.stopImmediatePropagation(); e.preventDefault(); mirSwallowUp = true;
     const r = canvas.getBoundingClientRect(), raw = screenToImg(e.clientX - r.left, e.clientY - r.top);
-    const q = pickPoint(raw, pk.pts[0]);
+    const q = mirrorPickPoint(raw, pk.pts[0]);
     if (pk.mode === 'v') state.mirror.axis = [[q[0], q[1]], [q[0], q[1]+100]];
     else if (pk.mode === 'h') state.mirror.axis = [[q[0], q[1]], [q[0]+100, q[1]]];
     else { pk.pts.push(q); if (pk.pts.length < 2){ updateMirrorUI(); render(); return; } if (Math.hypot(pk.pts[1][0]-pk.pts[0][0], pk.pts[1][1]-pk.pts[0][1]) < 2){ pk.pts.pop(); return; } state.mirror.axis = [pk.pts[0], pk.pts[1]]; }
@@ -4233,7 +4233,7 @@
     };
     const col = '#bf5af2';
     if (m.pick){
-      const q = pickPoint(mouseImg, m.pick.pts[0]);
+      const q = mirrorPickPoint(mouseImg, m.pick.pts[0]);
       let pa = null, pb = null;
       if (m.pick.mode === 'v'){ pa = q; pb = [q[0], q[1]+100]; }
       else if (m.pick.mode === 'h'){ pa = q; pb = [q[0]+100, q[1]]; }
